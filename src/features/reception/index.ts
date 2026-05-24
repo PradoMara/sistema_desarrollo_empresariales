@@ -1,0 +1,1 @@
+export { ReceptionDashboard } from "./components/reception-dashboard";

@@ -8,11 +8,7 @@ docker compose up --build
 
 Abre http://localhost:3000 para ver la app.
 
-## Desarrollo local
 
-```bash
-npm run dev
-```
 
 ## Nota original del repositorio
 

@@ -38,14 +38,25 @@ function ActionBadge({ children, className = "" }: { children: React.ReactNode; 
 export function ReceptionDashboard() {
   const [patients] = useState<Patient[]>(mockPatients);
   const [searchTerm, setSearchTerm] = useState("");
+  const [waitingList, setWaitingList] = useState<{
+    id: string;
+    patientId: string;
+    patientName: string;
+    clientId: string;
+    clientName: string;
+    tipo: "normal" | "urgencia" | "reserva_condicionada" | "traspaso_solicitado";
+    prioridad: "Alta" | "Media" | "Baja";
+    timestamp: string;
+    estado?: string;
+  }[]>([]);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [selectedClientId, setSelectedClientId] = useState<string>("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  const filteredPatients = useMemo(() => {
-    const normalizedSearch = searchTerm.trim().toLowerCase();
+  const normalizedSearch = searchTerm.trim().toLowerCase();
 
+  const filteredPatients = useMemo(() => {
     if (!normalizedSearch) return patients;
 
     return patients.filter((patient) => {
@@ -56,7 +67,22 @@ export function ReceptionDashboard() {
 
       return matchesPatient || matchesClient;
     });
-  }, [patients, searchTerm]);
+  }, [patients, normalizedSearch]);
+
+  const potentialDuplicates = useMemo(() => {
+    if (normalizedSearch.length < 3) return [] as Patient[];
+
+    return patients.filter((patient) => {
+      return (
+        patient.nombre.toLowerCase().includes(normalizedSearch) ||
+        patient.microchip.replace(/\s+/g, "").includes(normalizedSearch.replace(/\s+/g, ""))
+      );
+    });
+  }, [patients, normalizedSearch]);
+
+  const isExactMatch = patients.some(
+    (p) => p.nombre.toLowerCase() === normalizedSearch || p.microchip.toLowerCase() === normalizedSearch,
+  );
 
   const activeClient = selectedPatient?.clientesAsociados.find((client) => client.id === selectedClientId) ?? null;
   const selectedClientHasDebt = activeClient?.tieneDeuda ?? false;
@@ -85,22 +111,113 @@ export function ReceptionDashboard() {
 
   const handleConfirmCheckIn = () => {
     if (!selectedPatient || !activeClient) return;
+    // determinar tipo y prioridad
+    const tipo = activeClient.tieneDeuda ? "urgencia" : "normal";
+    const prioridad = (selectedPatient.prioridad as "Alta" | "Media" | "Baja") ?? (activeClient.tieneDeuda ? "Media" : "Baja");
 
-    if (activeClient.tieneDeuda) {
-      addToast({
-        title: "Ingreso como urgencia registrado",
-        description: `${activeClient.nombre} presenta deuda pendiente. Se autorizó ingreso por urgencia vital.`,
-        tone: "warning",
-      });
-      closeModal();
-      return;
-    }
+    setWaitingList((cur) => [
+      ...cur,
+      {
+        id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+        patientId: selectedPatient.id,
+        patientName: selectedPatient.nombre,
+        clientId: activeClient.id,
+        clientName: activeClient.nombre,
+        tipo: tipo,
+        prioridad,
+        timestamp: new Date().toISOString(),
+      },
+    ]);
 
     addToast({
-      title: "Paciente enviado a sala de espera",
-      description: `${selectedPatient.nombre} fue ingresado por ${activeClient.nombre}.`,
+      title: tipo === "urgencia" ? "Ingreso como urgencia registrado" : "Paciente enviado a sala de espera",
+      description:
+        tipo === "urgencia"
+          ? `${activeClient.nombre} presenta deuda pendiente. Se autorizó ingreso por urgencia vital.`
+          : `${selectedPatient.nombre} fue ingresado por ${activeClient.nombre}.`,
+      tone: tipo === "urgencia" ? "warning" : "success",
+    });
+
+    closeModal();
+  };
+
+  const handleIngresarEmergencia = () => {
+    if (!selectedPatient || !activeClient) return;
+
+    setWaitingList((cur) => [
+      ...cur,
+      {
+        id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+        patientId: selectedPatient.id,
+        patientName: selectedPatient.nombre,
+        clientId: activeClient.id,
+        clientName: activeClient.nombre,
+        tipo: "urgencia",
+        prioridad: "Alta",
+        timestamp: new Date().toISOString(),
+      },
+    ]);
+
+    addToast({
+      title: "Ingreso como emergencia",
+      description: `${selectedPatient.nombre} ingresado como emergencia por ${activeClient.nombre}.`,
+      tone: "warning",
+    });
+
+    closeModal();
+  };
+
+  const handleDelegacionProvisoria = () => {
+    if (!selectedPatient || !activeClient) return;
+
+    setWaitingList((cur) => [
+      ...cur,
+      {
+        id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+        patientId: selectedPatient.id,
+        patientName: selectedPatient.nombre,
+        clientId: activeClient.id,
+        clientName: activeClient.nombre,
+        tipo: "reserva_condicionada",
+        prioridad: (selectedPatient.prioridad as "Alta" | "Media" | "Baja") ?? "Baja",
+        timestamp: new Date().toISOString(),
+        estado: "delegacion_provisoria",
+      },
+    ]);
+
+    addToast({
+      title: "Reserva condicionada",
+      description: `${selectedPatient.nombre} ingresado como reserva condicionada (Delegación Provisoria).`,
       tone: "success",
     });
+
+    closeModal();
+  };
+
+  const handleSolicitarTraspaso = () => {
+    if (!selectedPatient || !activeClient) return;
+
+    setWaitingList((cur) => [
+      ...cur,
+      {
+        id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+        patientId: selectedPatient.id,
+        patientName: selectedPatient.nombre,
+        clientId: activeClient.id,
+        clientName: activeClient.nombre,
+        tipo: "traspaso_solicitado",
+        prioridad: (selectedPatient.prioridad as "Alta" | "Media" | "Baja") ?? "Baja",
+        timestamp: new Date().toISOString(),
+        estado: "traspaso_solicitado",
+      },
+    ]);
+
+    addToast({
+      title: "Traspaso solicitado",
+      description: `Se ha registrado una solicitud de traspaso de titularidad para ${selectedPatient.nombre}.`,
+      tone: "success",
+    });
+
     closeModal();
   };
 
@@ -141,6 +258,21 @@ export function ReceptionDashboard() {
         </div>
       </section>
 
+      {/* Detección de duplicidad: banner informativo */}
+      {normalizedSearch && potentialDuplicates.length > 0 && !isExactMatch ? (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-800">
+          <p className="font-semibold">¿Es este el paciente? Evite duplicar fichas.</p>
+          <div className="mt-2 flex gap-3 text-sm text-amber-800">
+            {potentialDuplicates.slice(0, 3).map((p) => (
+              <div key={p.id} className="rounded-md border border-amber-100 bg-white px-3 py-2">
+                <p className="font-medium">{p.nombre}</p>
+                <p className="text-xs text-slate-500">Microchip: {p.microchip}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
       <section className="pb-6">
         <div className="grid gap-4">
           {filteredPatients.length === 0 ? (
@@ -151,6 +283,8 @@ export function ReceptionDashboard() {
           ) : (
             filteredPatients.map((patient) => {
               const PetIcon = getPetIcon(patient.especie);
+              const isPotentialDuplicate = potentialDuplicates.some((p) => p.id === patient.id);
+              const garante = patient.clientesAsociados.find((c) => c.rol === "Garante Principal");
 
               return (
                 <article
@@ -165,9 +299,15 @@ export function ReceptionDashboard() {
                     <div className="min-w-0">
                       <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-sky-700">Paciente</p>
                       <h2 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900">{patient.nombre}</h2>
+                      {garante ? (
+                        <p className="mt-1 text-sm text-slate-600">Garante Principal: <span className="font-medium text-slate-800">{garante.nombre}</span></p>
+                      ) : null}
                       <div className="mt-3 flex flex-wrap gap-2 text-sm text-slate-600">
                         <ActionBadge className="border-slate-200 bg-slate-50 text-slate-700">{patient.especie}</ActionBadge>
                         <ActionBadge className="border-slate-200 bg-slate-50 text-slate-700">{patient.raza}</ActionBadge>
+                        {isPotentialDuplicate ? (
+                          <ActionBadge className="border-amber-200 bg-amber-50 text-amber-800">Posible duplicado</ActionBadge>
+                        ) : null}
                       </div>
                       <p className="mt-3 text-sm text-slate-500">
                         Microchip: <span className="font-medium text-slate-800">{patient.microchip}</span>
@@ -203,6 +343,38 @@ export function ReceptionDashboard() {
                 </article>
               );
             })
+          )}
+        </div>
+      </section>
+
+      {/* Sala de Espera: lista simple con prioridad y estados */}
+      <section className="rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold">Sala de Espera</h3>
+          <span className="text-sm text-slate-600">{waitingList.length} en lista</span>
+        </div>
+
+        <div className="mt-3 space-y-2">
+          {waitingList.length === 0 ? (
+            <p className="text-sm text-slate-500">No hay pacientes en espera.</p>
+          ) : (
+            [...waitingList]
+              .sort((a, b) => {
+                const order = { Alta: 1, Media: 2, Baja: 3 } as any;
+                return order[a.prioridad] - order[b.prioridad] || a.timestamp.localeCompare(b.timestamp);
+              })
+              .map((item) => (
+                <div key={item.id} className="flex items-center justify-between rounded-lg border px-3 py-2">
+                  <div>
+                    <p className="font-semibold">{item.patientName} <span className="text-sm text-slate-500">· {item.clientName}</span></p>
+                    <p className="text-xs text-slate-500">{new Date(item.timestamp).toLocaleString()}</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <ActionBadge className="border-slate-200 bg-slate-50 text-slate-700">{item.prioridad}</ActionBadge>
+                    <ActionBadge className="border-slate-200 bg-slate-50 text-slate-700">{item.tipo}</ActionBadge>
+                  </div>
+                </div>
+              ))
           )}
         </div>
       </section>
@@ -271,6 +443,19 @@ export function ReceptionDashboard() {
                     <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-rose-600" />
                     <span>Atención: Cliente con deuda pendiente. Solo se autoriza ingreso por Urgencia Vital.</span>
                   </p>
+                </div>
+              ) : null}
+
+              {activeClient && activeClient.autorizado === false ? (
+                <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-amber-900">
+                  <p className="text-sm font-medium">Cliente no autorizado. Seleccione una acción:</p>
+                  <p className="mt-2 text-xs text-slate-600">Opciones: Emergencia, Delegación Provisoria o Traspaso de Titularidad. Actúe conforme a Ley 19.628.</p>
+
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <Button variant="danger" onClick={handleIngresarEmergencia}>Ingresar como Emergencia</Button>
+                    <Button variant="secondary" onClick={handleDelegacionProvisoria}>Delegación Provisoria</Button>
+                    <Button variant="ghost" onClick={handleSolicitarTraspaso}>Solicitar Traspaso de Titularidad</Button>
+                  </div>
                 </div>
               ) : null}
             </div>

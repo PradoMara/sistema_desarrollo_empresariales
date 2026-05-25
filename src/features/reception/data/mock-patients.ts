@@ -1,5 +1,6 @@
 import type { Patient } from "../types";
 
+// Mocks ampliados para cubrir casos: limpio, moroso, no autorizado y prioridad alta
 export const mockPatients: Patient[] = [
   {
     id: "pet-1",
@@ -7,8 +8,10 @@ export const mockPatients: Patient[] = [
     especie: "Perro",
     raza: "Golden Retriever",
     microchip: "985 123 442 110 009",
+    prioridad: "Baja",
+    ultimaAtencion: "2026-05-01",
     clientesAsociados: [
-      { id: "client-1", nombre: "Carolina Pérez", rut: "12.345.678-9", rol: "Garante Principal", tieneDeuda: false },
+      { id: "client-1", nombre: "Carolina Pérez", rut: "12.345.678-9", rol: "Garante Principal", tieneDeuda: false, autorizado: true },
     ],
   },
   {
@@ -17,8 +20,11 @@ export const mockPatients: Patient[] = [
     especie: "Gato",
     raza: "Siamés",
     microchip: "991 777 320 445 884",
+    prioridad: "Media",
+    ultimaAtencion: "2026-04-15",
     clientesAsociados: [
-      { id: "client-2", nombre: "Marcelo Díaz", rut: "15.220.381-K", rol: "Garante Principal", tieneDeuda: true },
+      // Garante moroso — activa la rama Urgencia
+      { id: "client-2", nombre: "Marcelo Díaz", rut: "15.220.381-K", rol: "Garante Principal", tieneDeuda: true, autorizado: true },
     ],
   },
   {
@@ -27,10 +33,13 @@ export const mockPatients: Patient[] = [
     especie: "Perro",
     raza: "Mestiza",
     microchip: "950 610 772 901 333",
+    prioridad: "Alta",
+    ultimaAtencion: "2026-05-10",
     clientesAsociados: [
-      { id: "client-3", nombre: "Fernanda Soto", rut: "18.444.219-3", rol: "Garante Principal", tieneDeuda: false },
-      { id: "client-4", nombre: "Tomás Soto", rut: "17.028.663-1", rol: "Secundario", tieneDeuda: false },
-      { id: "client-5", nombre: "Paula Soto", rut: "19.551.004-5", rol: "Secundario", tieneDeuda: true },
+      { id: "client-3", nombre: "Fernanda Soto", rut: "18.444.219-3", rol: "Garante Principal", tieneDeuda: false, autorizado: true },
+      { id: "client-4", nombre: "Tomás Soto", rut: "17.028.663-1", rol: "Secundario", tieneDeuda: false, autorizado: true },
+      // Cliente no autorizado (simula E2)
+      { id: "client-external", nombre: "Persona Externa", rut: "--", rol: "Invitado", tieneDeuda: false, autorizado: false },
     ],
   },
 ];

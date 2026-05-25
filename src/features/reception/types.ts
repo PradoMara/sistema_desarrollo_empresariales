@@ -4,6 +4,7 @@ export type Client = {
   rut: string;
   rol: "Garante Principal" | "Secundario";
   tieneDeuda: boolean;
+  autorizado?: boolean;
 };
 
 export type Patient = {
@@ -13,6 +14,8 @@ export type Patient = {
   raza: string;
   microchip: string;
   clientesAsociados: Client[];
+  prioridad?: "Alta" | "Media" | "Baja";
+  ultimaAtencion?: string;
 };
 
 export type Toast = {

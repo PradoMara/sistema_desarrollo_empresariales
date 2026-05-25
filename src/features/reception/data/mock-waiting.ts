@@ -1,0 +1,32 @@
+export const mockWaiting = [
+  {
+    id: 'w-1',
+    patientId: 'pet-1',
+    patientName: 'Boby',
+    clientId: 'client-1',
+    clientName: 'Carolina Pérez',
+    tipo: 'normal',
+    prioridad: 'Baja',
+    timestamp: '2026-05-24T08:50:00.000Z',
+  },
+  {
+    id: 'w-2',
+    patientId: 'pet-3',
+    patientName: 'Luna',
+    clientId: 'client-3',
+    clientName: 'Fernanda Soto',
+    tipo: 'reserva_condicionada',
+    prioridad: 'Alta',
+    timestamp: '2026-05-24T08:55:00.000Z',
+  },
+  {
+    id: 'w-3',
+    patientId: 'pet-2',
+    patientName: 'Mishi',
+    clientId: 'client-2',
+    clientName: 'Marcelo Díaz',
+    tipo: 'urgencia',
+    prioridad: 'Media',
+    timestamp: '2026-05-24T09:05:00.000Z',
+  },
+];

@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 
 const navigation = [
   { href: "/", label: "Recepción", icon: LayoutDashboard },
+  { href: "/sala-de-espera", label: "Sala de Espera", icon: ChartNoAxesCombined },
   { href: "/pacientes", label: "Pacientes", icon: PawPrint },
   { href: "/clientes", label: "Clientes", icon: Shield },
   { href: "/agenda", label: "Agenda", icon: ChartNoAxesCombined },

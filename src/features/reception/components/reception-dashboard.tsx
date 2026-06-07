@@ -7,8 +7,27 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-import { mockPatients } from "../data/mock-patients";
-import type { Patient, Toast } from "../types";
+import type { Toast } from "../types";
+
+// Tipos adaptados de Prisma
+export type Client = {
+  id: string;
+  nombre: string;
+  rut: string;
+  rol: string;
+  tieneDeuda: boolean;
+  autorizado: boolean;
+};
+
+export type Patient = {
+  id: string;
+  nombre: string;
+  especie: string;
+  raza: string;
+  microchip: string;
+  prioridad: string | null;
+  clients: Client[];
+};
 
 const toastStyles = {
   success: {
@@ -26,33 +45,51 @@ const toastStyles = {
 function getPetIcon(species: string) {
   const normalizedSpecies = species.toLowerCase();
 
-  if (normalizedSpecies.includes("gato")) return Cat;
-  if (normalizedSpecies.includes("perro")) return Dog;
+  if (normalizedSpecies.includes("gato") || normalizedSpecies.includes("felino")) return Cat;
+  if (normalizedSpecies.includes("perro") || normalizedSpecies.includes("canino")) return Dog;
   return PawPrint;
 }
 
-function ActionBadge({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+export function ActionBadge({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return <Badge className={className}>{children}</Badge>;
 }
 
 export function ReceptionDashboard() {
-  const [patients] = useState<Patient[]>(mockPatients);
+  const [patients, setPatients] = useState<Patient[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [waitingList, setWaitingList] = useState<{
-    id: string;
-    patientId: string;
-    patientName: string;
-    clientId: string;
-    clientName: string;
-    tipo: "normal" | "urgencia" | "reserva_condicionada" | "traspaso_solicitado";
-    prioridad: "Alta" | "Media" | "Baja";
-    timestamp: string;
-    estado?: string;
-  }[]>([]);
+  const [waitingList, setWaitingList] = useState<any[]>([]);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [selectedClientId, setSelectedClientId] = useState<string>("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
+  
+  // Modal de Nuevo Paciente
+  const [isNewPatientModalOpen, setIsNewPatientModalOpen] = useState(false);
+  const [newPatientForm, setNewPatientForm] = useState({
+    nombre: "", especie: "", raza: "", microchip: "", clienteNombre: "", clienteRut: ""
+  });
+
+  // Fetch initial data
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const resPatients = await fetch('/api/patients');
+        if (resPatients.ok) {
+          const data = await resPatients.json();
+          setPatients(data);
+        }
+        
+        const resWaiting = await fetch('/api/waiting-list');
+        if (resWaiting.ok) {
+          const data = await resWaiting.json();
+          setWaitingList(data);
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+    fetchData();
+  }, []);
 
   const normalizedSearch = searchTerm.trim().toLowerCase();
 
@@ -63,7 +100,7 @@ export function ReceptionDashboard() {
       const matchesPatient =
         patient.nombre.toLowerCase().includes(normalizedSearch) ||
         patient.microchip.toLowerCase().includes(normalizedSearch);
-      const matchesClient = patient.clientesAsociados.some((client) => client.rut.toLowerCase().includes(normalizedSearch));
+      const matchesClient = patient.clients.some((client) => client.rut.toLowerCase().includes(normalizedSearch));
 
       return matchesPatient || matchesClient;
     });
@@ -84,7 +121,7 @@ export function ReceptionDashboard() {
     (p) => p.nombre.toLowerCase() === normalizedSearch || p.microchip.toLowerCase() === normalizedSearch,
   );
 
-  const activeClient = selectedPatient?.clientesAsociados.find((client) => client.id === selectedClientId) ?? null;
+  const activeClient = selectedPatient?.clients.find((client) => client.id === selectedClientId) ?? null;
   const selectedClientHasDebt = activeClient?.tieneDeuda ?? false;
 
   const addToast = (toast: Omit<Toast, "id">) => {
@@ -99,7 +136,7 @@ export function ReceptionDashboard() {
 
   const openCheckIn = (patient: Patient) => {
     setSelectedPatient(patient);
-    setSelectedClientId(patient.clientesAsociados[0]?.id ?? "");
+    setSelectedClientId(patient.clients[0]?.id ?? "");
     setIsModalOpen(true);
   };
 
@@ -109,128 +146,152 @@ export function ReceptionDashboard() {
     setSelectedClientId("");
   };
 
-  const handleConfirmCheckIn = () => {
+  const addToWaitingListAPI = async (data: any) => {
+    try {
+      const res = await fetch('/api/waiting-list', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (res.ok) {
+        const newRecord = await res.json();
+        setWaitingList((cur) => [...cur, newRecord]);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error("Error adding to waiting list", error);
+      return false;
+    }
+  };
+
+  const handleConfirmCheckIn = async () => {
     if (!selectedPatient || !activeClient) return;
-    // determinar tipo y prioridad
     const tipo = activeClient.tieneDeuda ? "urgencia" : "normal";
-    const prioridad = (selectedPatient.prioridad as "Alta" | "Media" | "Baja") ?? (activeClient.tieneDeuda ? "Media" : "Baja");
+    const prioridad = selectedPatient.prioridad ?? (activeClient.tieneDeuda ? "Media" : "Baja");
 
-    setWaitingList((cur) => [
-      ...cur,
-      {
-        id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-        patientId: selectedPatient.id,
-        patientName: selectedPatient.nombre,
-        clientId: activeClient.id,
-        clientName: activeClient.nombre,
-        tipo: tipo,
-        prioridad,
-        timestamp: new Date().toISOString(),
-      },
-    ]);
-
-    addToast({
-      title: tipo === "urgencia" ? "Ingreso como urgencia registrado" : "Paciente enviado a sala de espera",
-      description:
-        tipo === "urgencia"
-          ? `${activeClient.nombre} presenta deuda pendiente. Se autorizó ingreso por urgencia vital.`
-          : `${selectedPatient.nombre} fue ingresado por ${activeClient.nombre}.`,
-      tone: tipo === "urgencia" ? "warning" : "success",
+    const success = await addToWaitingListAPI({
+      patientId: selectedPatient.id,
+      clientId: activeClient.id,
+      tipo,
+      prioridad,
+      estado: "en_espera"
     });
 
-    closeModal();
+    if (success) {
+      addToast({
+        title: tipo === "urgencia" ? "Ingreso como urgencia registrado" : "Paciente enviado a sala de espera",
+        description:
+          tipo === "urgencia"
+            ? `${activeClient.nombre} presenta deuda pendiente. Se autorizó ingreso por urgencia vital.`
+            : `${selectedPatient.nombre} fue ingresado por ${activeClient.nombre}.`,
+        tone: tipo === "urgencia" ? "warning" : "success",
+      });
+      closeModal();
+    }
   };
 
-  const handleIngresarEmergencia = () => {
+  const handleIngresarEmergencia = async () => {
     if (!selectedPatient || !activeClient) return;
 
-    setWaitingList((cur) => [
-      ...cur,
-      {
-        id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-        patientId: selectedPatient.id,
-        patientName: selectedPatient.nombre,
-        clientId: activeClient.id,
-        clientName: activeClient.nombre,
-        tipo: "urgencia",
-        prioridad: "Alta",
-        timestamp: new Date().toISOString(),
-      },
-    ]);
-
-    addToast({
-      title: "Ingreso como emergencia",
-      description: `${selectedPatient.nombre} ingresado como emergencia por ${activeClient.nombre}.`,
-      tone: "warning",
+    const success = await addToWaitingListAPI({
+      patientId: selectedPatient.id,
+      clientId: activeClient.id,
+      tipo: "urgencia",
+      prioridad: "Alta",
+      estado: "en_espera"
     });
 
-    closeModal();
+    if (success) {
+      addToast({
+        title: "Ingreso como emergencia",
+        description: `${selectedPatient.nombre} ingresado como emergencia por ${activeClient.nombre}.`,
+        tone: "warning",
+      });
+      closeModal();
+    }
   };
 
-  const handleDelegacionProvisoria = () => {
+  const handleDelegacionProvisoria = async () => {
     if (!selectedPatient || !activeClient) return;
 
-    setWaitingList((cur) => [
-      ...cur,
-      {
-        id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-        patientId: selectedPatient.id,
-        patientName: selectedPatient.nombre,
-        clientId: activeClient.id,
-        clientName: activeClient.nombre,
-        tipo: "reserva_condicionada",
-        prioridad: (selectedPatient.prioridad as "Alta" | "Media" | "Baja") ?? "Baja",
-        timestamp: new Date().toISOString(),
-        estado: "delegacion_provisoria",
-      },
-    ]);
-
-    addToast({
-      title: "Reserva condicionada",
-      description: `${selectedPatient.nombre} ingresado como reserva condicionada (Delegación Provisoria).`,
-      tone: "success",
+    const success = await addToWaitingListAPI({
+      patientId: selectedPatient.id,
+      clientId: activeClient.id,
+      tipo: "reserva_condicionada",
+      prioridad: selectedPatient.prioridad ?? "Baja",
+      estado: "delegacion_provisoria"
     });
 
-    closeModal();
+    if (success) {
+      addToast({
+        title: "Reserva condicionada",
+        description: `${selectedPatient.nombre} ingresado como reserva condicionada (Delegación Provisoria).`,
+        tone: "success",
+      });
+      closeModal();
+    }
   };
 
-  const handleSolicitarTraspaso = () => {
+  const handleSolicitarTraspaso = async () => {
     if (!selectedPatient || !activeClient) return;
 
-    setWaitingList((cur) => [
-      ...cur,
-      {
-        id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-        patientId: selectedPatient.id,
-        patientName: selectedPatient.nombre,
-        clientId: activeClient.id,
-        clientName: activeClient.nombre,
-        tipo: "traspaso_solicitado",
-        prioridad: (selectedPatient.prioridad as "Alta" | "Media" | "Baja") ?? "Baja",
-        timestamp: new Date().toISOString(),
-        estado: "traspaso_solicitado",
-      },
-    ]);
-
-    addToast({
-      title: "Traspaso solicitado",
-      description: `Se ha registrado una solicitud de traspaso de titularidad para ${selectedPatient.nombre}.`,
-      tone: "success",
+    const success = await addToWaitingListAPI({
+      patientId: selectedPatient.id,
+      clientId: activeClient.id,
+      tipo: "traspaso_solicitado",
+      prioridad: selectedPatient.prioridad ?? "Baja",
+      estado: "traspaso_solicitado"
     });
 
-    closeModal();
+    if (success) {
+      addToast({
+        title: "Traspaso solicitado",
+        description: `Se ha registrado una solicitud de traspaso de titularidad para ${selectedPatient.nombre}.`,
+        tone: "success",
+      });
+      closeModal();
+    }
+  };
+
+  const handleCreatePatient = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await fetch('/api/patients', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newPatientForm),
+      });
+      
+      if (res.ok) {
+        const newPatient = await res.json();
+        setPatients(cur => [...cur, newPatient]);
+        addToast({
+          title: "Paciente Registrado",
+          description: `${newPatientForm.nombre} ha sido registrado correctamente en la base de datos.`,
+          tone: "success",
+        });
+        setIsNewPatientModalOpen(false);
+        setNewPatientForm({ nombre: "", especie: "", raza: "", microchip: "", clienteNombre: "", clienteRut: "" });
+      }
+    } catch (error) {
+      console.error("Error creating patient:", error);
+    }
   };
 
   useEffect(() => {
-    if (!isModalOpen) return;
+    if (!isModalOpen && !isNewPatientModalOpen) return;
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") closeModal();
+      if (event.key === "Escape") {
+        closeModal();
+        setIsNewPatientModalOpen(false);
+      }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isModalOpen]);
+  }, [isModalOpen, isNewPatientModalOpen]);
 
   return (
     <div className="space-y-6">
@@ -246,7 +307,7 @@ export function ReceptionDashboard() {
             />
           </div>
 
-          <Button variant="secondary" className="gap-2 lg:w-auto">
+          <Button variant="secondary" className="gap-2 lg:w-auto" onClick={() => setIsNewPatientModalOpen(true)}>
             <Plus className="h-4 w-4" />
             Nuevo Paciente
           </Button>
@@ -254,7 +315,7 @@ export function ReceptionDashboard() {
 
         <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-slate-600">
           <ActionBadge className="border-sky-200 bg-sky-50 text-sky-800">{filteredPatients.length} pacientes visibles</ActionBadge>
-          <p>Vista de recepción optimizada para check-in y triaje rápido.</p>
+          <p>Vista de recepción conectada a la Base de Datos.</p>
         </div>
       </section>
 
@@ -284,7 +345,7 @@ export function ReceptionDashboard() {
             filteredPatients.map((patient) => {
               const PetIcon = getPetIcon(patient.especie);
               const isPotentialDuplicate = potentialDuplicates.some((p) => p.id === patient.id);
-              const garante = patient.clientesAsociados.find((c) => c.rol === "Garante Principal");
+              const garante = patient.clients.find((c) => c.rol === "Garante Principal" || c.rol === "Tutor Principal");
 
               return (
                 <article
@@ -300,7 +361,7 @@ export function ReceptionDashboard() {
                       <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-sky-700">Paciente</p>
                       <h2 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900">{patient.nombre}</h2>
                       {garante ? (
-                        <p className="mt-1 text-sm text-slate-600">Garante Principal: <span className="font-medium text-slate-800">{garante.nombre}</span></p>
+                        <p className="mt-1 text-sm text-slate-600">Representante: <span className="font-medium text-slate-800">{garante.nombre}</span></p>
                       ) : null}
                       <div className="mt-3 flex flex-wrap gap-2 text-sm text-slate-600">
                         <ActionBadge className="border-slate-200 bg-slate-50 text-slate-700">{patient.especie}</ActionBadge>
@@ -318,7 +379,7 @@ export function ReceptionDashboard() {
                   <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">Vínculos de tutoría</p>
                     <ul className="mt-3 space-y-2">
-                      {patient.clientesAsociados.map((client) => (
+                      {patient.clients.map((client) => (
                         <li key={client.id} className="flex flex-col gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
                           <div className="min-w-0">
                             <p className="font-semibold text-slate-900">{client.nombre}</p>
@@ -347,38 +408,58 @@ export function ReceptionDashboard() {
         </div>
       </section>
 
-      {/* Sala de Espera: lista simple con prioridad y estados */}
-      <section className="rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold">Sala de Espera</h3>
-          <span className="text-sm text-slate-600">{waitingList.length} en lista</span>
-        </div>
-
-        <div className="mt-3 space-y-2">
-          {waitingList.length === 0 ? (
-            <p className="text-sm text-slate-500">No hay pacientes en espera.</p>
-          ) : (
-            [...waitingList]
-              .sort((a, b) => {
-                const order = { Alta: 1, Media: 2, Baja: 3 } as any;
-                return order[a.prioridad] - order[b.prioridad] || a.timestamp.localeCompare(b.timestamp);
-              })
-              .map((item) => (
-                <div key={item.id} className="flex items-center justify-between rounded-lg border px-3 py-2">
+      {/* Modal Crear Nuevo Paciente */}
+      {isNewPatientModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm">
+          <div className="relative w-full max-w-lg overflow-hidden rounded-[30px] border border-slate-200 bg-white shadow-[0_30px_80px_rgba(15,23,42,0.22)]">
+            <div className="flex items-start justify-between border-b border-slate-200 px-5 py-5 sm:px-6">
+              <div>
+                <h2 className="text-xl font-semibold tracking-tight text-slate-900">Registrar Nuevo Paciente</h2>
+                <p className="mt-1 text-sm text-slate-500">Completa los datos del paciente y su tutor principal.</p>
+              </div>
+              <button onClick={() => setIsNewPatientModalOpen(false)} className="rounded-full p-2 text-slate-400 hover:bg-slate-100"><X className="h-5 w-5" /></button>
+            </div>
+            
+            <form onSubmit={handleCreatePatient} className="px-5 py-5 sm:px-6">
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium text-slate-700">Nombre de Mascota</label>
+                  <Input required value={newPatientForm.nombre} onChange={e => setNewPatientForm({...newPatientForm, nombre: e.target.value})} placeholder="Ej. Firulais" />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="font-semibold">{item.patientName} <span className="text-sm text-slate-500">· {item.clientName}</span></p>
-                    <p className="text-xs text-slate-500">{new Date(item.timestamp).toLocaleString()}</p>
+                    <label className="text-sm font-medium text-slate-700">Especie</label>
+                    <Input required value={newPatientForm.especie} onChange={e => setNewPatientForm({...newPatientForm, especie: e.target.value})} placeholder="Ej. Canino" />
                   </div>
-                  <div className="flex items-center gap-3">
-                    <ActionBadge className="border-slate-200 bg-slate-50 text-slate-700">{item.prioridad}</ActionBadge>
-                    <ActionBadge className="border-slate-200 bg-slate-50 text-slate-700">{item.tipo}</ActionBadge>
+                  <div>
+                    <label className="text-sm font-medium text-slate-700">Raza</label>
+                    <Input required value={newPatientForm.raza} onChange={e => setNewPatientForm({...newPatientForm, raza: e.target.value})} placeholder="Ej. Poodle" />
                   </div>
                 </div>
-              ))
-          )}
+                <div>
+                  <label className="text-sm font-medium text-slate-700">Microchip</label>
+                  <Input value={newPatientForm.microchip} onChange={e => setNewPatientForm({...newPatientForm, microchip: e.target.value})} placeholder="Ej. 982 000 123" />
+                </div>
+                <hr className="my-2" />
+                <div>
+                  <label className="text-sm font-medium text-slate-700">Nombre del Tutor</label>
+                  <Input required value={newPatientForm.clienteNombre} onChange={e => setNewPatientForm({...newPatientForm, clienteNombre: e.target.value})} placeholder="Ej. Juan Pérez" />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-slate-700">RUT del Tutor</label>
+                  <Input required value={newPatientForm.clienteRut} onChange={e => setNewPatientForm({...newPatientForm, clienteRut: e.target.value})} placeholder="Ej. 12.345.678-9" />
+                </div>
+              </div>
+              <div className="mt-6 flex justify-end gap-3">
+                <Button type="button" variant="ghost" onClick={() => setIsNewPatientModalOpen(false)}>Cancelar</Button>
+                <Button type="submit">Registrar y Guardar en BD</Button>
+              </div>
+            </form>
+          </div>
         </div>
-      </section>
+      )}
 
+      {/* Modal Check-in Existente */}
       {isModalOpen && selectedPatient ? (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/50 p-4 backdrop-blur-sm sm:items-center">
           <div className="relative w-full max-w-2xl overflow-hidden rounded-[30px] border border-slate-200 bg-white shadow-[0_30px_80px_rgba(15,23,42,0.22)]">
@@ -393,7 +474,6 @@ export function ReceptionDashboard() {
                 type="button"
                 onClick={closeModal}
                 className="rounded-full p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
-                aria-label="Cerrar modal"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -401,7 +481,7 @@ export function ReceptionDashboard() {
 
             <div className="px-5 py-5 sm:px-6">
               <div className="grid gap-3">
-                {selectedPatient.clientesAsociados.map((client) => {
+                {selectedPatient.clients.map((client) => {
                   const isSelected = client.id === selectedClientId;
 
                   return (
@@ -452,20 +532,21 @@ export function ReceptionDashboard() {
                   <p className="mt-2 text-xs text-slate-600">Opciones: Emergencia, Delegación Provisoria o Traspaso de Titularidad. Actúe conforme a Ley 19.628.</p>
 
                   <div className="mt-3 flex flex-wrap gap-2">
-                    <Button variant="danger" onClick={handleIngresarEmergencia}>Ingresar como Emergencia</Button>
+                    {/* Botones de acción ajustados a variant default porque Button props no tenian danger/secondary/ghost en base al tipo esperado, pero uso los definidos por shadcn */}
+                    <Button variant="destructive" onClick={handleIngresarEmergencia}>Ingresar como Emergencia</Button>
                     <Button variant="secondary" onClick={handleDelegacionProvisoria}>Delegación Provisoria</Button>
-                    <Button variant="ghost" onClick={handleSolicitarTraspaso}>Solicitar Traspaso de Titularidad</Button>
+                    <Button variant="outline" onClick={handleSolicitarTraspaso}>Solicitar Traspaso</Button>
                   </div>
                 </div>
               ) : null}
             </div>
 
             <div className="flex flex-col gap-3 border-t border-slate-200 px-5 py-5 sm:flex-row sm:justify-end sm:px-6">
-              <Button variant="ghost" onClick={closeModal}>
+              <Button variant="outline" onClick={closeModal}>
                 Cancelar
               </Button>
 
-              <Button variant={selectedClientHasDebt ? "danger" : "primary"} onClick={handleConfirmCheckIn}>
+              <Button variant={selectedClientHasDebt ? "destructive" : "default"} onClick={handleConfirmCheckIn}>
                 {selectedClientHasDebt ? "Ingresar como Urgencia" : "Enviar a Sala de Espera"}
               </Button>
             </div>

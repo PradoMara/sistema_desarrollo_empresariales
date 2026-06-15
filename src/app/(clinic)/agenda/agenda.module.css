@@ -1,0 +1,265 @@
+/* ─── Agenda Module CSS ──────────────────────────────────────────────────── */
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Encabezado */
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+.eyebrow {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  color: #0369a1; /* sky-700 */
+  margin: 0;
+}
+.title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0.25rem 0 0;
+  line-height: 1.2;
+}
+
+/* Card contenedor */
+.card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 1.75rem;
+  padding: 1.5rem;
+  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.05);
+}
+.empty {
+  color: #94a3b8;
+  text-align: center;
+  padding: 3rem 0;
+  font-size: 0.95rem;
+}
+
+/* Lista */
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.listItem {
+  border: 1px solid #e2e8f0;
+  border-radius: 1rem;
+  padding: 1rem 1.25rem;
+  transition: box-shadow 0.15s ease;
+}
+.listItem:hover {
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08);
+}
+.listMain {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.patientName {
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: #0f172a;
+  margin: 0;
+}
+.meta {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin: 0.2rem 0 0;
+}
+.date {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  margin: 0.3rem 0 0;
+}
+
+/* Acciones */
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+/* Badges de estado */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.3rem 0.85rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border: 1px solid transparent;
+}
+.badgePending  { background: #fefce8; color: #92400e; border-color: #fde68a; }
+.badgeReserved { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
+.badgeWaiting  { background: #f0f9ff; color: #0369a1; border-color: #bae6fd; }
+.badgeActive   { background: #f0fdf4; color: #166534; border-color: #bbf7d0; }
+.badgeDone     { background: #f8fafc; color: #64748b; border-color: #e2e8f0; }
+
+/* Estado visual "En sala" */
+.inRoom {
+  font-size: 0.8rem;
+  color: #0369a1;
+  font-weight: 600;
+}
+
+/* Botones */
+.btnPrimary {
+  background: #0f172a;
+  color: #ffffff;
+  border: none;
+  border-radius: 0.75rem;
+  padding: 0.6rem 1.2rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+.btnPrimary:hover  { background: #1e293b; }
+.btnPrimary:active { transform: scale(0.97); }
+
+.btnSecondary {
+  background: #f1f5f9;
+  color: #334155;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  padding: 0.6rem 1.2rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.btnSecondary:hover { background: #e2e8f0; }
+
+.btnCheckin {
+  background: #0ea5e9;
+  color: #ffffff;
+  border: none;
+  border-radius: 0.65rem;
+  padding: 0.45rem 1rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease, opacity 0.15s;
+}
+.btnCheckin:hover    { background: #0284c7; }
+.btnCheckin:disabled { opacity: 0.55; cursor: not-allowed; }
+
+/* Modal */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+.modal {
+  background: #ffffff;
+  border-radius: 1.75rem;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 30px 80px rgba(15, 23, 42, 0.22);
+  width: 100%;
+  max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+.modalTitle {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+.closeBtn {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.5rem;
+  transition: background 0.15s;
+}
+.closeBtn:hover { background: #f1f5f9; color: #475569; }
+
+/* Formulario */
+.form {
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #334155;
+}
+.input,
+.select,
+.textarea {
+  width: 100%;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.65rem;
+  padding: 0.55rem 0.85rem;
+  font-size: 0.9rem;
+  color: #0f172a;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  font-family: inherit;
+  background: #f8fafc;
+}
+.input:focus,
+.select:focus,
+.textarea:focus {
+  border-color: #0ea5e9;
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15);
+  background: #ffffff;
+}
+.textarea { resize: vertical; }
+
+.errorMsg {
+  background: #fff1f2;
+  border: 1px solid #fecdd3;
+  border-radius: 0.65rem;
+  color: #be123c;
+  padding: 0.6rem 0.9rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin: 0;
+}
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}

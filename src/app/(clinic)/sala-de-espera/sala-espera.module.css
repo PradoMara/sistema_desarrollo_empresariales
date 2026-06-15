@@ -1,0 +1,221 @@
+/* ─── Sala de Espera Module CSS ─────────────────────────────────────────── */
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Encabezado */
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+.eyebrow {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  color: #0369a1;
+  margin: 0;
+}
+.title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0.25rem 0 0;
+}
+.subtitle {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin: 0.4rem 0 0;
+}
+.legend {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.legendEmergencia { color: #be123c; }
+.legendControl    { color: #0369a1; }
+
+/* Stats */
+.statsRow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+}
+.statCard {
+  border-radius: 1.25rem;
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border: 1px solid transparent;
+}
+.statEmergencia { background: #fff1f2; border-color: #fecdd3; }
+.statControl    { background: #f0f9ff; border-color: #bae6fd; }
+.statTotal      { background: #f8fafc; border-color: #e2e8f0; }
+
+.statNum {
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1;
+}
+.statEmergencia .statNum { color: #be123c; }
+.statControl    .statNum { color: #0369a1; }
+.statTotal      .statNum { color: #334155; }
+
+.statLabel {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #94a3b8;
+  margin-top: 0.25rem;
+}
+
+/* Card */
+.card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 1.75rem;
+  padding: 1.5rem;
+  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.05);
+}
+.empty {
+  color: #94a3b8;
+  text-align: center;
+  padding: 3rem 0;
+  font-size: 0.95rem;
+}
+
+/* Lista */
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.listItem {
+  display: grid;
+  grid-template-columns: 2.5rem 1fr auto auto;
+  align-items: center;
+  gap: 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 1rem;
+  padding: 1rem 1.25rem;
+  transition: box-shadow 0.15s, border-color 0.15s;
+}
+.itemEmergencia {
+  border-left: 4px solid #f43f5e;
+  background: #fff9fa;
+}
+.itemControl {
+  border-left: 4px solid #38bdf8;
+  background: #f8fcff;
+}
+.listItem:hover { box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08); }
+
+/* Número de posición */
+.position {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.9rem;
+}
+.posEmergencia { background: #fecdd3; color: #9f1239; }
+.posControl    { background: #bae6fd; color: #0c4a6e; }
+
+/* Info */
+.info { min-width: 0; }
+.patientName {
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: #0f172a;
+  margin: 0;
+}
+.meta {
+  font-size: 0.82rem;
+  color: #64748b;
+  margin: 0.15rem 0 0;
+}
+.time {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  margin: 0.2rem 0 0;
+}
+
+/* Badge de triaje */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.3rem 0.85rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.badgeEmergencia { background: #fff1f2; color: #be123c; border: 1px solid #fecdd3; }
+.badgeControl    { background: #f0f9ff; color: #0369a1; border: 1px solid #bae6fd; }
+
+/* Selector de triaje */
+.triaje { text-align: right; }
+.triajeLabel {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 0.35rem;
+}
+.triajeBtns {
+  display: flex;
+  gap: 0.4rem;
+}
+.triajeBtn {
+  border: 1px solid transparent;
+  border-radius: 0.55rem;
+  padding: 0.3rem 0.65rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+}
+.triajeBtn:disabled { opacity: 0.45; cursor: default; }
+.triajeBtn:not(:disabled):active { transform: scale(0.95); }
+
+.triajeBtnRed         { background: #fff1f2; color: #be123c; border-color: #fecdd3; }
+.triajeBtnActiveRed   { background: #be123c; color: #ffffff; border-color: #be123c; }
+.triajeBtnBlue        { background: #f0f9ff; color: #0369a1; border-color: #bae6fd; }
+.triajeBtnActiveBlue  { background: #0369a1; color: #ffffff; border-color: #0369a1; }
+
+/* Nota footer */
+.note {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  text-align: center;
+  margin: 0;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .listItem {
+    grid-template-columns: 2rem 1fr;
+    grid-template-rows: auto auto;
+  }
+  .badge  { grid-column: 2; }
+  .triaje { grid-column: 1 / -1; text-align: left; }
+  .statsRow { grid-template-columns: 1fr 1fr; }
+}

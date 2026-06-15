@@ -1,44 +1,153 @@
-export default function PatientsPage() {
-  const patients = require("@/features/reception/data/mock-patients").mockPatients;
+'use client';
+
+import { useCallback, useEffect, useState } from 'react';
+import styles from './pacientes.module.css';
+
+// ─── Tipos ──────────────────────────────────────────────────────────────────
+interface Cliente {
+  id: string;
+  nombre: string;
+  rut: string;
+  rol: string;
+  tieneDeuda: boolean;
+}
+
+interface Paciente {
+  id: string;
+  nombre: string;
+  especie: string;
+  raza: string;
+  sexo?: string | null;
+  microchip: string;
+  codigoMicrochip?: string | null;
+  estadoFicha: string;   // PENDIENTE_VALIDACION | ACTIVA
+  estadoCuenta: string;
+  clients: Cliente[];
+}
+
+// ─── Componente ─────────────────────────────────────────────────────────────
+export default function PacientesPage() {
+  const [pacientes, setPacientes] = useState<Paciente[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activandoId, setActivandoId] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
+
+  const fetchPacientes = useCallback(async () => {
+    try {
+      const res = await fetch('/api/patients');
+      if (res.ok) setPacientes(await res.json());
+    } catch { /* silenciar */ }
+    finally { setLoading(false); }
+  }, []);
+
+  useEffect(() => { fetchPacientes(); }, [fetchPacientes]);
+
+  // ── Activar Ficha (RN7) ──
+  const handleActivar = async (id: string) => {
+    setActivandoId(id);
+    const res = await fetch(`/api/pacientes/${id}/activar`, { method: 'PATCH' });
+    if (res.ok) {
+      const updated: Paciente = await res.json();
+      setPacientes((prev) => prev.map((p) => (p.id === id ? { ...p, ...updated } : p)));
+    }
+    setActivandoId(null);
+  };
+
+  const filtered = pacientes.filter((p) =>
+    p.nombre.toLowerCase().includes(search.toLowerCase()) ||
+    p.microchip.toLowerCase().includes(search.toLowerCase()) ||
+    p.clients.some((c) => c.rut.toLowerCase().includes(search.toLowerCase())),
+  );
 
   return (
-    <section className="space-y-6">
-      <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
-        <p className="text-sm font-semibold uppercase tracking-[0.24em] text-sky-700">Pacientes</p>
-        <h2 className="mt-2 text-2xl font-semibold text-slate-900">Listado de pacientes</h2>
-
-        <div className="mt-4 grid gap-4">
-          {patients.map((p: any) => (
-            <article key={p.id} className="rounded-lg border px-4 py-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-semibold">{p.nombre}</p>
-                  <p className="text-sm text-slate-500">{p.especie} · {p.raza}</p>
-                </div>
-                <div className="text-sm text-slate-500">Microchip: <span className="font-medium text-slate-800">{p.microchip}</span></div>
-              </div>
-
-              <div className="mt-3 grid gap-2">
-                <p className="text-sm font-semibold">Tutors</p>
-                {p.clientesAsociados.map((c: any) => (
-                  <div key={c.id} className="flex items-center justify-between rounded-md border px-3 py-2">
-                    <div>
-                      <p className="font-medium">{c.nombre}</p>
-                      <p className="text-xs text-slate-500">RUT: {c.rut} · {c.rol}</p>
-                    </div>
-                    <div>
-                      {c.tieneDeuda ? (
-                        <span className="inline-flex items-center rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-rose-700">Deuda</span>
-                      ) : (
-                        <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-emerald-700">Al día</span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </article>
-          ))}
+    <section className={styles.section}>
+      {/* Encabezado */}
+      <div className={styles.header}>
+        <div>
+          <p className={styles.eyebrow}>Gestión · Fichas clínicas</p>
+          <h1 className={styles.title}>Pacientes registrados</h1>
         </div>
+        <input
+          id="search-pacientes"
+          type="search"
+          className={styles.searchInput}
+          placeholder="Buscar por nombre, microchip o RUT…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </div>
+
+      {/* Lista */}
+      <div className={styles.grid}>
+        {loading ? (
+          <p className={styles.empty}>Cargando pacientes…</p>
+        ) : filtered.length === 0 ? (
+          <p className={styles.empty}>No se encontraron pacientes.</p>
+        ) : (
+          filtered.map((p) => {
+            const fichaActiva = p.estadoFicha === 'ACTIVA';
+            return (
+              <article key={p.id} className={styles.card}>
+                {/* Cabecera tarjeta */}
+                <div className={styles.cardHeader}>
+                  <div>
+                    <p className={styles.patientName}>{p.nombre}</p>
+                    <p className={styles.patientMeta}>{p.especie} · {p.raza}</p>
+                  </div>
+                  <span className={`${styles.fichaBadge} ${fichaActiva ? styles.fichaActiva : styles.fichaPendiente}`}>
+                    {fichaActiva ? '✓ Ficha Activa' : '⏳ Pendiente validación'}
+                  </span>
+                </div>
+
+                {/* Detalles */}
+                <div className={styles.details}>
+                  <span className={styles.chip}>Microchip: {p.microchip || p.codigoMicrochip || '—'}</span>
+                  {p.sexo && <span className={styles.chip}>Sexo: {p.sexo}</span>}
+                  <span className={`${styles.chip} ${p.estadoCuenta === 'AL_DIA' ? styles.chipGreen : styles.chipRed}`}>
+                    Cuenta: {p.estadoCuenta.replace('_', ' ')}
+                  </span>
+                </div>
+
+                {/* Tutores */}
+                {p.clients.length > 0 && (
+                  <div className={styles.clients}>
+                    <p className={styles.clientsLabel}>Tutores asociados</p>
+                    <ul className={styles.clientList}>
+                      {p.clients.map((c) => (
+                        <li key={c.id} className={styles.clientItem}>
+                          <div>
+                            <span className={styles.clientName}>{c.nombre}</span>
+                            <span className={styles.clientRut}> — {c.rut}</span>
+                          </div>
+                          <span className={`${styles.deudaBadge} ${c.tieneDeuda ? styles.deuda : styles.alDia}`}>
+                            {c.tieneDeuda ? 'Deuda' : 'Al día'}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Acción: Activar Ficha */}
+                {!fichaActiva && (
+                  <div className={styles.activarSection}>
+                    <p className={styles.activarHint}>
+                      Activar ficha simula la firma de la Declaración de Propiedad (RN7).
+                    </p>
+                    <button
+                      id={`btn-activar-${p.id}`}
+                      className={styles.btnActivar}
+                      disabled={activandoId === p.id}
+                      onClick={() => handleActivar(p.id)}
+                    >
+                      {activandoId === p.id ? 'Activando…' : 'Activar Ficha'}
+                    </button>
+                  </div>
+                )}
+              </article>
+            );
+          })
+        )}
       </div>
     </section>
   );

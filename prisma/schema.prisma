@@ -8,43 +8,68 @@ generator client {
 }
 
 model Patient {
-  id         String   @id @default(uuid())
-  nombre     String
-  especie    String
-  raza       String
-  microchip  String
-  prioridad  String?  // Alta, Media, Baja
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id                String     @id @default(cuid())
+  nombre            String
+  especie           String
+  raza              String
+  sexo              String?
+  microchip         String     // campo original — se mantiene por compatibilidad
+  codigoMicrochip   String?
+  estadoFicha       String     @default("PENDIENTE_VALIDACION") // PENDIENTE_VALIDACION | ACTIVA
+  estadoCuenta      String     @default("AL_DIA")
+  prioridad         String?    // Alta, Media, Baja (campo original)
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
 
-  clients    Client[] @relation("PatientClients")
+  clients        Client[]     @relation("PatientClients")
   waitingRecords WaitingRoom[]
+  reservas       Reserva[]
 }
 
 model Client {
-  id         String   @id @default(uuid())
-  nombre     String
-  rut        String
-  rol        String   // Garante Principal, etc.
-  tieneDeuda Boolean  @default(false)
-  autorizado Boolean  @default(true)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id               String   @id @default(cuid())
+  nombre           String
+  rut              String   @unique
+  telefono         String?
+  email            String?
+  rol              String   // Garante Principal, Secundario, etc.
+  tieneDeuda       Boolean  @default(false)
+  autorizado       Boolean  @default(true)
+  estadoCrediticio String   @default("BUENO") // BUENO | REGULAR | MALO
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
-  patients   Patient[] @relation("PatientClients")
+  patients       Patient[]   @relation("PatientClients")
   waitingRecords WaitingRoom[]
+  reservas       Reserva[]
+}
+
+model Reserva {
+  id              String   @id @default(cuid())
+  fecha           DateTime
+  estado          String   @default("SOLICITUD_PENDIENTE") // SOLICITUD_PENDIENTE | RESERVADO | SALA_ESPERA | EN_ATENCION | FINALIZADO
+  prioridadTriaje String   @default("CONTROL")             // CONTROL | EMERGENCIA
+  notas           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  pacienteId String
+  clienteId  String
+
+  paciente Patient @relation(fields: [pacienteId], references: [id], onDelete: Cascade)
+  cliente  Client  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
 }
 
 model WaitingRoom {
-  id           String   @id @default(uuid())
-  tipo         String   // normal, urgencia, reserva_condicionada, traspaso_solicitado
-  prioridad    String   // Alta, Media, Baja
-  estado       String?  // en_espera, atendido, etc.
-  timestamp    DateTime @default(now())
-  
-  patientId    String
-  clientId     String
+  id        String   @id @default(cuid())
+  tipo      String   // normal, urgencia, reserva_condicionada, traspaso_solicitado
+  prioridad String   // Alta, Media, Baja
+  estado    String?  // en_espera, atendido, etc.
+  timestamp DateTime @default(now())
 
-  patient      Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
-  client       Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  patientId String
+  clientId  String
+
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  client  Client  @relation(fields: [clientId], references: [id], onDelete: Cascade)
 }

@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { nombre, especie, raza, microchip, clienteNombre, clienteRut } = body;
 
-    // Crear cliente y paciente en una transacción
+    // Crear paciente conectándolo a un cliente existente o creándolo si no existe
     const patient = await prisma.patient.create({
       data: {
         nombre,
@@ -32,12 +32,15 @@ export async function POST(request: Request) {
         microchip,
         prioridad: 'Baja',
         clients: {
-          create: {
-            nombre: clienteNombre,
-            rut: clienteRut,
-            rol: 'Tutor Principal',
-            tieneDeuda: false,
-            autorizado: true,
+          connectOrCreate: {
+            where: { rut: clienteRut },
+            create: {
+              nombre: clienteNombre,
+              rut: clienteRut,
+              rol: 'Tutor Principal',
+              tieneDeuda: false,
+              autorizado: true,
+            }
           }
         }
       },

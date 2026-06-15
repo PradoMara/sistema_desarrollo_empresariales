@@ -27,12 +27,23 @@ export async function POST(request: Request) {
       clienteId: string;
       fecha: string;
       notas?: string;
+      estado?: string;
+      prioridadTriaje?: string;
     };
 
     // Validación de campos obligatorios del body
     if (!pacienteId || !clienteId || !fecha) {
       return NextResponse.json(
         { error: 'pacienteId, clienteId y fecha son obligatorios.' },
+        { status: 400 },
+      );
+    }
+
+    // Validación de fecha
+    const parsedDate = new Date(fecha);
+    if (isNaN(parsedDate.getTime())) {
+      return NextResponse.json(
+        { error: 'Formato de fecha inválido.' },
         { status: 400 },
       );
     }
@@ -65,9 +76,9 @@ export async function POST(request: Request) {
       data: {
         pacienteId,
         clienteId,
-        fecha: new Date(fecha),
-        estado: 'SOLICITUD_PENDIENTE',
-        prioridadTriaje: 'CONTROL',
+        fecha: parsedDate,
+        estado: estado ?? 'SOLICITUD_PENDIENTE',
+        prioridadTriaje: prioridadTriaje ?? 'CONTROL',
         notas: notas ?? null,
       },
       include: { paciente: true, cliente: true },

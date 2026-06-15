@@ -30,14 +30,22 @@ interface Reserva {
 export default function SalaDeEsperaPage() {
   const [lista, setLista] = useState<Reserva[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [triandoId, setTriandoId] = useState<string | null>(null);
 
   // ── Fetch (se repite cada 5 s — polling) ──
   const fetchSala = useCallback(async () => {
     try {
       const res = await fetch('/api/sala-espera');
-      if (res.ok) setLista(await res.json());
-    } catch { /* silenciar */ }
+      if (res.ok) {
+        setLista(await res.json());
+        setError(null);
+      } else {
+        setError('Error al cargar datos desde el servidor.');
+      }
+    } catch {
+      setError('No se pudo conectar con el servidor.');
+    }
     finally { setLoading(false); }
   }, []);
 
@@ -108,7 +116,9 @@ export default function SalaDeEsperaPage() {
 
       {/* Lista */}
       <div className={styles.card}>
-        {loading ? (
+        {error ? (
+          <p className={`${styles.empty} text-red-500`}>{error}</p>
+        ) : loading ? (
           <p className={styles.empty}>Cargando sala de espera…</p>
         ) : lista.length === 0 ? (
           <p className={styles.empty}>La sala de espera está vacía.</p>

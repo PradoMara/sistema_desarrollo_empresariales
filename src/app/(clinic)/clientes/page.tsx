@@ -30,14 +30,22 @@ export default function ClientesPage() {
   const [form, setForm] = useState({ nombre: '', telefono: '', email: '', estadoCrediticio: '' });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
 
   const fetchClientes = useCallback(async () => {
     try {
       const res = await fetch('/api/clientes');
-      if (res.ok) setClientes(await res.json());
-    } catch { /* silenciar */ }
-    finally { setLoading(false); }
+      if (res.ok) {
+        setClientes(await res.json());
+      } else {
+        setFetchError('Error al cargar la lista de clientes.');
+      }
+    } catch {
+      setFetchError('Error de conexión.');
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => { fetchClientes(); }, [fetchClientes]);
@@ -99,7 +107,9 @@ export default function ClientesPage() {
 
       {/* Lista */}
       <div className={styles.grid}>
-        {loading ? (
+        {fetchError ? (
+          <p className={`${styles.empty} text-red-500`}>{fetchError}</p>
+        ) : loading ? (
           <p className={styles.empty}>Cargando clientes…</p>
         ) : filtered.length === 0 ? (
           <p className={styles.empty}>No se encontraron clientes.</p>

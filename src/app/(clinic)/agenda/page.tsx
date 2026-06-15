@@ -74,8 +74,12 @@ export default function AgendaPage() {
       if (rRes.ok) setReservas(await rRes.json());
       if (pRes.ok) setPacientes(await pRes.json());
       if (cRes.ok) setClientes(await cRes.json());
+      
+      if (!rRes.ok || !pRes.ok || !cRes.ok) {
+        setError('Algunos datos no se pudieron cargar correctamente.');
+      }
     } catch {
-      /* silenciar en dev */
+      setError('Error de conexión con el servidor.');
     } finally {
       setLoading(false);
     }

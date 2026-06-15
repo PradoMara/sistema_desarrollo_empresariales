@@ -29,15 +29,23 @@ interface Paciente {
 export default function PacientesPage() {
   const [pacientes, setPacientes] = useState<Paciente[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [activandoId, setActivandoId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
 
   const fetchPacientes = useCallback(async () => {
     try {
       const res = await fetch('/api/patients');
-      if (res.ok) setPacientes(await res.json());
-    } catch { /* silenciar */ }
-    finally { setLoading(false); }
+      if (res.ok) {
+        setPacientes(await res.json());
+      } else {
+        setError('Error al cargar la lista de pacientes.');
+      }
+    } catch {
+      setError('Error de conexión.');
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => { fetchPacientes(); }, [fetchPacientes]);
@@ -79,7 +87,9 @@ export default function PacientesPage() {
 
       {/* Lista */}
       <div className={styles.grid}>
-        {loading ? (
+        {error ? (
+          <p className={`${styles.empty} text-red-500`}>{error}</p>
+        ) : loading ? (
           <p className={styles.empty}>Cargando pacientes…</p>
         ) : filtered.length === 0 ? (
           <p className={styles.empty}>No se encontraron pacientes.</p>

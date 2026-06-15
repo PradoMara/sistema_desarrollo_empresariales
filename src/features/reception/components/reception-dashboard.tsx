@@ -57,7 +57,6 @@ export function ActionBadge({ children, className = "" }: { children: React.Reac
 export function ReceptionDashboard() {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [waitingList, setWaitingList] = useState<any[]>([]);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [selectedClientId, setSelectedClientId] = useState<string>("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -77,12 +76,6 @@ export function ReceptionDashboard() {
         if (resPatients.ok) {
           const data = await resPatients.json();
           setPatients(data);
-        }
-        
-        const resWaiting = await fetch('/api/waiting-list');
-        if (resWaiting.ok) {
-          const data = await resWaiting.json();
-          setWaitingList(data);
         }
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -148,19 +141,27 @@ export function ReceptionDashboard() {
 
   const addToWaitingListAPI = async (data: any) => {
     try {
-      const res = await fetch('/api/waiting-list', {
+      const res = await fetch('/api/reservas', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          pacienteId: data.patientId,
+          clienteId: data.clientId,
+          fecha: new Date().toISOString(),
+          estado: 'SALA_ESPERA',
+          prioridadTriaje: data.tipo === 'urgencia' ? 'EMERGENCIA' : 'CONTROL',
+          notas: `Ingreso por recepción. Tipo: ${data.tipo}`
+        }),
       });
       if (res.ok) {
-        const newRecord = await res.json();
-        setWaitingList((cur) => [...cur, newRecord]);
         return true;
       }
+      const errData = await res.json();
+      addToast({ title: "Error en ingreso", description: errData.error || "No se pudo crear la reserva.", tone: "warning" });
       return false;
     } catch (error) {
       console.error("Error adding to waiting list", error);
+      addToast({ title: "Error de red", description: "No se pudo conectar al servidor.", tone: "warning" });
       return false;
     }
   };
@@ -273,9 +274,21 @@ export function ReceptionDashboard() {
         });
         setIsNewPatientModalOpen(false);
         setNewPatientForm({ nombre: "", especie: "", raza: "", microchip: "", clienteNombre: "", clienteRut: "" });
+      } else {
+        const errData = await res.json();
+        addToast({
+          title: "Error de Registro",
+          description: errData.error || "No se pudo registrar el paciente.",
+          tone: "warning",
+        });
       }
     } catch (error) {
       console.error("Error creating patient:", error);
+      addToast({
+        title: "Error de Red",
+        description: "No se pudo conectar con el servidor.",
+        tone: "warning",
+      });
     }
   };
 

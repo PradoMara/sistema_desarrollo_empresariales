@@ -1,6 +1,6 @@
 datasource db {
   provider = "sqlite"
-  url      = "file:./dev.db"
+  url      = env("DATABASE_URL")
 }
 
 generator client {
@@ -22,7 +22,7 @@ model Patient {
   updatedAt         DateTime   @updatedAt
 
   clients        Client[]     @relation("PatientClients")
-  waitingRecords WaitingRoom[]
+
   reservas       Reserva[]
 }
 
@@ -40,7 +40,7 @@ model Client {
   updatedAt        DateTime @updatedAt
 
   patients       Patient[]   @relation("PatientClients")
-  waitingRecords WaitingRoom[]
+
   reservas       Reserva[]
 }
 
@@ -60,16 +60,3 @@ model Reserva {
   cliente  Client  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
 }
 
-model WaitingRoom {
-  id        String   @id @default(cuid())
-  tipo      String   // normal, urgencia, reserva_condicionada, traspaso_solicitado
-  prioridad String   // Alta, Media, Baja
-  estado    String?  // en_espera, atendido, etc.
-  timestamp DateTime @default(now())
-
-  patientId String
-  clientId  String
-
-  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
-  client  Client  @relation(fields: [clientId], references: [id], onDelete: Cascade)
-}

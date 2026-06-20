@@ -15,7 +15,7 @@ export type Client = {
   nombre: string;
   rut: string;
   rol: string;
-  tieneDeuda: boolean;
+  estadoCrediticio: string;
   autorizado: boolean;
 };
 
@@ -115,7 +115,7 @@ export function ReceptionDashboard() {
   );
 
   const activeClient = selectedPatient?.clients.find((client) => client.id === selectedClientId) ?? null;
-  const selectedClientHasDebt = activeClient?.tieneDeuda ?? false;
+  const selectedClientHasDebt = activeClient ? ["DEUDA_TEMPRANA", "MORA_CRONICA", "LITIGIO_ABANDONO"].includes(activeClient.estadoCrediticio) : false;
 
   const addToast = (toast: Omit<Toast, "id">) => {
     const id = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -168,8 +168,9 @@ export function ReceptionDashboard() {
 
   const handleConfirmCheckIn = async () => {
     if (!selectedPatient || !activeClient) return;
-    const tipo = activeClient.tieneDeuda ? "urgencia" : "normal";
-    const prioridad = selectedPatient.prioridad ?? (activeClient.tieneDeuda ? "Media" : "Baja");
+    const hasDebt = ["DEUDA_TEMPRANA", "MORA_CRONICA", "LITIGIO_ABANDONO"].includes(activeClient.estadoCrediticio);
+    const tipo = hasDebt ? "urgencia" : "normal";
+    const prioridad = selectedPatient.prioridad ?? (hasDebt ? "Media" : "Baja");
 
     const success = await addToWaitingListAPI({
       patientId: selectedPatient.id,
@@ -358,7 +359,7 @@ export function ReceptionDashboard() {
             filteredPatients.map((patient) => {
               const PetIcon = getPetIcon(patient.especie);
               const isPotentialDuplicate = potentialDuplicates.some((p) => p.id === patient.id);
-              const garante = patient.clients.find((c) => c.rol === "Garante Principal" || c.rol === "Tutor Principal");
+              const garante = patient.clients.find((c) => c.rol === "GARANTE_PRINCIPAL");
 
               return (
                 <article
@@ -399,7 +400,7 @@ export function ReceptionDashboard() {
                             <p className="text-sm text-slate-500">RUT: {client.rut} · {client.rol}</p>
                           </div>
 
-                          {client.tieneDeuda ? (
+                          {["DEUDA_TEMPRANA", "MORA_CRONICA", "LITIGIO_ABANDONO"].includes(client.estadoCrediticio) ? (
                             <span className="inline-flex w-fit items-center rounded-full border border-rose-200 bg-rose-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-rose-700">Deuda Pendiente</span>
                           ) : (
                             <span className="inline-flex w-fit items-center rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-700">Al día</span>
@@ -513,7 +514,7 @@ export function ReceptionDashboard() {
                       </div>
 
                       <div className="flex items-center gap-2 text-sm font-medium">
-                        {client.tieneDeuda ? (
+                        {["DEUDA_TEMPRANA", "MORA_CRONICA", "LITIGIO_ABANDONO"].includes(client.estadoCrediticio) ? (
                           <span className="inline-flex items-center rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-rose-700">
                             <AlertTriangle className="mr-1.5 h-4 w-4" />
                             Deuda

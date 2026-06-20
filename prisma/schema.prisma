@@ -15,7 +15,7 @@ model Patient {
   sexo              String?
   microchip         String     // campo original — se mantiene por compatibilidad
   codigoMicrochip   String?
-  estadoFicha       String     @default("PENDIENTE_VALIDACION") // PENDIENTE_VALIDACION | ACTIVA
+  estadoFicha       String     @default("PENDIENTE_VALIDACION") // PENDIENTE_VALIDACION | ACTIVA | BLOQUEADA
   estadoCuenta      String     @default("AL_DIA")
   prioridad         String?    // Alta, Media, Baja (campo original)
   createdAt         DateTime   @default(now())
@@ -32,10 +32,9 @@ model Client {
   rut              String   @unique
   telefono         String?
   email            String?
-  rol              String   // Garante Principal, Secundario, etc.
-  tieneDeuda       Boolean  @default(false)
+  rol              String   @default("GARANTE_PRINCIPAL") // GARANTE_PRINCIPAL | SECUNDARIO | ACOMPANANTE_TEMPORAL
   autorizado       Boolean  @default(true)
-  estadoCrediticio String   @default("BUENO") // BUENO | REGULAR | MALO
+  estadoCrediticio String   @default("LIMPIO") // LIMPIO | DEUDA_TEMPRANA | MORA_CRONICA | LITIGIO_ABANDONO
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
@@ -45,18 +44,36 @@ model Client {
 }
 
 model Reserva {
-  id              String   @id @default(cuid())
-  fecha           DateTime
-  estado          String   @default("SOLICITUD_PENDIENTE") // SOLICITUD_PENDIENTE | RESERVADO | SALA_ESPERA | EN_ATENCION | FINALIZADO
-  prioridadTriaje String   @default("CONTROL")             // CONTROL | EMERGENCIA
-  notas           String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id                      String    @id @default(cuid())
+  fecha                   DateTime
+  estado                  String    @default("SOLICITUD_PENDIENTE") // SOLICITUD_PENDIENTE | SOLICITUD_RECHAZADA | RESERVADO | RESERVA_CONDICIONADA | RESERVA_DELEGACION | SALA_ESPERA | CLASIFICADO_TRIAJE | EN_ATENCION | ATENCION_FINALIZADA | PAGADO_CERRADO
+  prioridadTriaje         String    @default("CONTROL")             // CONTROL | EMERGENCIA
+  notas                   String?
+  responsableHistoricoId  String?   // ID anónimo o RUT
+  marcaTiempoAltaMedica   DateTime?
+  tokenAutorizacion       String?
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
 
   pacienteId String
   clienteId  String
 
   paciente Patient @relation(fields: [pacienteId], references: [id], onDelete: Cascade)
   cliente  Client  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+
+  transaccionPago TransaccionPago?
+}
+
+model TransaccionPago {
+  id              String   @id @default(cuid())
+  reservaId       String   @unique
+  montoBase       Float    @default(0)
+  recargoCustodia Float    @default(0)
+  montoTotal      Float    @default(0)
+  estadoPago      String   @default("PENDIENTE") // PENDIENTE | PAGADO | RECHAZADO
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  reserva Reserva @relation(fields: [reservaId], references: [id], onDelete: Cascade)
 }
 

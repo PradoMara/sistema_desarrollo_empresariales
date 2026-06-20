@@ -2,8 +2,8 @@ export type Client = {
   id: string;
   nombre: string;
   rut: string;
-  rol: "Garante Principal" | "Secundario";
-  tieneDeuda: boolean;
+  rol: "GARANTE_PRINCIPAL" | "SECUNDARIO" | "ACOMPANANTE_TEMPORAL";
+  estadoCrediticio: "LIMPIO" | "DEUDA_TEMPRANA" | "MORA_CRONICA" | "LITIGIO_ABANDONO";
   autorizado?: boolean;
 };
 

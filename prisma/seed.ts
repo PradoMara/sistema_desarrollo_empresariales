@@ -6,7 +6,8 @@ async function main() {
   console.log('Start seeding...')
 
   // Clean the database
-  await prisma.waitingRoom.deleteMany()
+  await prisma.reserva.deleteMany()
+  await prisma.transaccionPago.deleteMany()
   await prisma.client.deleteMany()
   await prisma.patient.deleteMany()
 
@@ -22,8 +23,8 @@ async function main() {
         create: {
           nombre: 'Ana Silva',
           rut: '15.234.567-8',
-          rol: 'Tutor Principal',
-          tieneDeuda: false,
+          rol: 'GARANTE_PRINCIPAL',
+          estadoCrediticio: 'LIMPIO',
           autorizado: true,
         }
       }
@@ -41,8 +42,8 @@ async function main() {
         create: {
           nombre: 'Carlos Mendoza',
           rut: '12.345.678-9',
-          rol: 'Garante Principal',
-          tieneDeuda: true,
+          rol: 'GARANTE_PRINCIPAL',
+          estadoCrediticio: 'DEUDA_TEMPRANA',
           autorizado: false,
         }
       }
@@ -60,8 +61,8 @@ async function main() {
         create: {
           nombre: 'Pedro Pascal',
           rut: '11.111.111-1',
-          rol: 'Tutor Principal',
-          tieneDeuda: false,
+          rol: 'GARANTE_PRINCIPAL',
+          estadoCrediticio: 'LIMPIO',
           autorizado: true,
         }
       }

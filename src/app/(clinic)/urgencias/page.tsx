@@ -1,6 +1,6 @@
 export default function UrgenciesPage() {
   const patients = require("@/features/reception/data/mock-patients").mockPatients;
-  const urgencias = patients.filter((p: any) => p.clientesAsociados.some((c: any) => c.tieneDeuda));
+  const urgencias = patients.filter((p: any) => p.clientesAsociados.some((c: any) => ["DEUDA_TEMPRANA", "MORA_CRONICA", "LITIGIO_ABANDONO"].includes(c.estadoCrediticio)));
 
   return (
     <section className="space-y-6">

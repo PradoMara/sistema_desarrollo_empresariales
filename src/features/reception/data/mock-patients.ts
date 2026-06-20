@@ -11,7 +11,7 @@ export const mockPatients: Patient[] = [
     prioridad: "Baja",
     ultimaAtencion: "2026-05-01",
     clientesAsociados: [
-      { id: "client-1", nombre: "Carolina Pérez", rut: "12.345.678-9", rol: "Garante Principal", tieneDeuda: false, autorizado: true },
+      { id: "client-1", nombre: "Carolina Pérez", rut: "12.345.678-9", rol: "GARANTE_PRINCIPAL", estadoCrediticio: "LIMPIO", autorizado: true },
     ],
   },
   {
@@ -24,7 +24,7 @@ export const mockPatients: Patient[] = [
     ultimaAtencion: "2026-04-15",
     clientesAsociados: [
       // Garante moroso — activa la rama Urgencia
-      { id: "client-2", nombre: "Marcelo Díaz", rut: "15.220.381-K", rol: "Garante Principal", tieneDeuda: true, autorizado: true },
+      { id: "client-2", nombre: "Marcelo Díaz", rut: "15.220.381-K", rol: "GARANTE_PRINCIPAL", estadoCrediticio: "DEUDA_TEMPRANA", autorizado: true },
     ],
   },
   {
@@ -36,10 +36,10 @@ export const mockPatients: Patient[] = [
     prioridad: "Alta",
     ultimaAtencion: "2026-05-10",
     clientesAsociados: [
-      { id: "client-3", nombre: "Fernanda Soto", rut: "18.444.219-3", rol: "Garante Principal", tieneDeuda: false, autorizado: true },
-      { id: "client-4", nombre: "Tomás Soto", rut: "17.028.663-1", rol: "Secundario", tieneDeuda: false, autorizado: true },
+      { id: "client-3", nombre: "Fernanda Soto", rut: "18.444.219-3", rol: "GARANTE_PRINCIPAL", estadoCrediticio: "LIMPIO", autorizado: true },
+      { id: "client-4", nombre: "Tomás Soto", rut: "17.028.663-1", rol: "SECUNDARIO", estadoCrediticio: "LIMPIO", autorizado: true },
       // Cliente no autorizado (simula E2)
-      { id: "client-external", nombre: "Persona Externa", rut: "--", rol: "Invitado", tieneDeuda: false, autorizado: false },
+      { id: "client-external", nombre: "Persona Externa", rut: "--", rol: "ACOMPANANTE_TEMPORAL", estadoCrediticio: "LIMPIO", autorizado: false },
     ],
   },
 ];

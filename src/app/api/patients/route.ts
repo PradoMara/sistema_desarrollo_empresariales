@@ -37,8 +37,8 @@ export async function POST(request: Request) {
             create: {
               nombre: clienteNombre,
               rut: clienteRut,
-              rol: 'Tutor Principal',
-              tieneDeuda: false,
+              rol: 'GARANTE_PRINCIPAL',
+              estadoCrediticio: 'LIMPIO',
               autorizado: true,
             }
           }

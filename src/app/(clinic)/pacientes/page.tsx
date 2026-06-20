@@ -9,7 +9,7 @@ interface Cliente {
   nombre: string;
   rut: string;
   rol: string;
-  tieneDeuda: boolean;
+  estadoCrediticio: string;
 }
 
 interface Paciente {
@@ -129,8 +129,8 @@ export default function PacientesPage() {
                             <span className={styles.clientName}>{c.nombre}</span>
                             <span className={styles.clientRut}> — {c.rut}</span>
                           </div>
-                          <span className={`${styles.deudaBadge} ${c.tieneDeuda ? styles.deuda : styles.alDia}`}>
-                            {c.tieneDeuda ? 'Deuda' : 'Al día'}
+                          <span className={`${styles.deudaBadge} ${["DEUDA_TEMPRANA", "MORA_CRONICA", "LITIGIO_ABANDONO"].includes(c.estadoCrediticio) ? styles.deuda : styles.alDia}`}>
+                            {["DEUDA_TEMPRANA", "MORA_CRONICA", "LITIGIO_ABANDONO"].includes(c.estadoCrediticio) ? 'Deuda' : 'Al día'}
                           </span>
                         </li>
                       ))}

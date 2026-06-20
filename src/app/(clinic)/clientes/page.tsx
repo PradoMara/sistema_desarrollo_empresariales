@@ -17,7 +17,6 @@ interface Cliente {
   telefono?: string | null;
   email?: string | null;
   rol: string;
-  tieneDeuda: boolean;
   estadoCrediticio: string;
   patients: Paciente[];
 }
@@ -123,8 +122,8 @@ export default function ClientesPage() {
                   <p className={styles.clientRut}>RUT: {c.rut} · {c.rol}</p>
                 </div>
                 <div className={styles.badges}>
-                  <span className={`${styles.badge} ${c.tieneDeuda ? styles.badgeDeuda : styles.badgeAlDia}`}>
-                    {c.tieneDeuda ? 'Deuda' : 'Al día'}
+                  <span className={`${styles.badge} ${["DEUDA_TEMPRANA", "MORA_CRONICA", "LITIGIO_ABANDONO"].includes(c.estadoCrediticio) ? styles.badgeDeuda : styles.badgeAlDia}`}>
+                    {["DEUDA_TEMPRANA", "MORA_CRONICA", "LITIGIO_ABANDONO"].includes(c.estadoCrediticio) ? 'Deuda' : 'Al día'}
                   </span>
                   <span className={`${styles.badge} ${getCrediticioClass(c.estadoCrediticio)}`}>
                     {c.estadoCrediticio}
@@ -216,9 +215,10 @@ export default function ClientesPage() {
                   value={form.estadoCrediticio}
                   onChange={(e) => setForm({ ...form, estadoCrediticio: e.target.value })}
                 >
-                  <option value="BUENO">BUENO</option>
-                  <option value="REGULAR">REGULAR</option>
-                  <option value="MALO">MALO</option>
+                  <option value="LIMPIO">LIMPIO</option>
+                  <option value="DEUDA_TEMPRANA">DEUDA_TEMPRANA</option>
+                  <option value="MORA_CRONICA">MORA_CRONICA</option>
+                  <option value="LITIGIO_ABANDONO">LITIGIO_ABANDONO</option>
                 </select>
               </label>
               <div className={styles.formActions}>
@@ -239,8 +239,7 @@ export default function ClientesPage() {
 
 // Las clases de crédito se aplican como atributo data- para evitar limitaciones de CSS Modules con claves dinámicas
 function getCrediticioClass(estado: string) {
-  if (estado === 'BUENO')   return styles.badgeAlDia;
-  if (estado === 'REGULAR') return styles.badgePendiente ?? styles.badgeNeutro;
-  if (estado === 'MALO')    return styles.badgeDeuda;
+  if (estado === 'LIMPIO') return styles.badgeAlDia;
+  if (['DEUDA_TEMPRANA', 'MORA_CRONICA', 'LITIGIO_ABANDONO'].includes(estado)) return styles.badgeDeuda;
   return styles.badgeNeutro;
 }

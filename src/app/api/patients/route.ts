@@ -1,17 +1,27 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { evaluarMultiplesAbandonos } from '@/lib/abandonoService';
 
 export async function GET() {
   try {
     const patients = await prisma.patient.findMany({
       include: {
         clients: true,
+        reservas: true,
       },
     });
     
-    // Si no hay pacientes, podríamos ejecutar el seed aquí (opcional) pero es mejor usar el Prisma Seed o hacerlo manualmente
+    // Evaluar de forma perezosa la regla de abandono (72h) RN5
+    await evaluarMultiplesAbandonos(prisma, patients);
+
+    // Refetch para tener los datos actualizados tras la posible evaluación
+    const updatedPatients = await prisma.patient.findMany({
+      include: {
+        clients: true,
+      },
+    });
     
-    return NextResponse.json(patients);
+    return NextResponse.json(updatedPatients);
   } catch (error) {
     console.error('Error fetching patients:', error);
     return NextResponse.json({ error: 'Failed to fetch patients' }, { status: 500 });

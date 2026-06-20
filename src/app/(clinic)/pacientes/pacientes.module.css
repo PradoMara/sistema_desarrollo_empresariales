@@ -114,6 +114,7 @@
 }
 .fichaActiva   { background: #f0fdf4; color: #166534; border-color: #bbf7d0; }
 .fichaPendiente { background: #fffbeb; color: #92400e; border-color: #fde68a; }
+.fichaBloqueada { background: #fff1f2; color: #be123c; border-color: #fecdd3; }
 
 /* Chips de detalles */
 .details {

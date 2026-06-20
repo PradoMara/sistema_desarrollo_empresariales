@@ -26,6 +26,7 @@ export type Patient = {
   raza: string;
   microchip: string;
   prioridad: string | null;
+  estadoFicha: string;
   clients: Client[];
 };
 
@@ -382,6 +383,9 @@ export function ReceptionDashboard() {
                         <ActionBadge className="border-slate-200 bg-slate-50 text-slate-700">{patient.raza}</ActionBadge>
                         {isPotentialDuplicate ? (
                           <ActionBadge className="border-amber-200 bg-amber-50 text-amber-800">Posible duplicado</ActionBadge>
+                        ) : null}
+                        {patient.estadoFicha === 'BLOQUEADA' ? (
+                          <ActionBadge className="border-rose-200 bg-rose-50 text-rose-800">🚫 Ficha Bloqueada</ActionBadge>
                         ) : null}
                       </div>
                       <p className="mt-3 text-sm text-slate-500">

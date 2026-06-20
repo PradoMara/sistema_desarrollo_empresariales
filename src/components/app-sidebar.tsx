@@ -9,6 +9,7 @@ import {
   PawPrint,
   Settings,
   Shield,
+  Wallet,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -20,6 +21,7 @@ const navigation = [
   { href: "/clientes", label: "Clientes", icon: Shield },
   { href: "/agenda", label: "Agenda", icon: ChartNoAxesCombined },
   { href: "/urgencias", label: "Urgencias", icon: FileStack },
+  { href: "/caja", label: "Caja / Pagos", icon: Wallet },
   { href: "/ajustes", label: "Ajustes", icon: Settings },
 ];
 

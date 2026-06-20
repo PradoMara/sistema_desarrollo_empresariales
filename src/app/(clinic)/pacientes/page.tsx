@@ -104,8 +104,8 @@ export default function PacientesPage() {
                     <p className={styles.patientName}>{p.nombre}</p>
                     <p className={styles.patientMeta}>{p.especie} · {p.raza}</p>
                   </div>
-                  <span className={`${styles.fichaBadge} ${fichaActiva ? styles.fichaActiva : styles.fichaPendiente}`}>
-                    {fichaActiva ? '✓ Ficha Activa' : '⏳ Pendiente validación'}
+                  <span className={`${styles.fichaBadge} ${p.estadoFicha === 'BLOQUEADA' ? styles.fichaBloqueada : fichaActiva ? styles.fichaActiva : styles.fichaPendiente}`}>
+                    {p.estadoFicha === 'BLOQUEADA' ? '🚫 Ficha Bloqueada (Abandono)' : fichaActiva ? '✓ Ficha Activa' : '⏳ Pendiente validación'}
                   </span>
                 </div>
 

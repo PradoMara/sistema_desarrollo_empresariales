@@ -31,18 +31,28 @@ interface Reserva {
 
 const ESTADO_LABELS: Record<string, string> = {
   SOLICITUD_PENDIENTE: 'Pendiente',
+  SOLICITUD_RECHAZADA: 'Rechazada',
   RESERVADO: 'Reservado',
+  RESERVA_CONDICIONADA: 'Condicionada',
+  RESERVA_DELEGACION: 'Delegada',
   SALA_ESPERA: 'En Sala',
+  CLASIFICADO_TRIAJE: 'Triaje',
   EN_ATENCION: 'En Atención',
-  FINALIZADO: 'Finalizado',
+  ATENCION_FINALIZADA: 'Atención Finalizada',
+  PAGADO_CERRADO: 'Pagado',
 };
 
 const ESTADO_CLASS: Record<string, string> = {
   SOLICITUD_PENDIENTE: styles.badgePending,
+  SOLICITUD_RECHAZADA: styles.badgeRechazada,
   RESERVADO: styles.badgeReserved,
+  RESERVA_CONDICIONADA: styles.badgeCondicionada,
+  RESERVA_DELEGACION: styles.badgeDelegada,
   SALA_ESPERA: styles.badgeWaiting,
+  CLASIFICADO_TRIAJE: styles.badgeTriaje,
   EN_ATENCION: styles.badgeActive,
-  FINALIZADO: styles.badgeDone,
+  ATENCION_FINALIZADA: styles.badgeDone,
+  PAGADO_CERRADO: styles.badgeClosed,
 };
 
 // ─── Componente ─────────────────────────────────────────────────────────────
@@ -164,7 +174,7 @@ export default function AgendaPage() {
                       {ESTADO_LABELS[r.estado] ?? r.estado}
                     </span>
 
-                    {(r.estado === 'SOLICITUD_PENDIENTE' || r.estado === 'RESERVADO') && (
+                    {['SOLICITUD_PENDIENTE', 'RESERVADO', 'RESERVA_CONDICIONADA', 'RESERVA_DELEGACION'].includes(r.estado) && (
                       <button
                         id={`btn-checkin-${r.id}`}
                         className={styles.btnCheckin}
@@ -177,6 +187,9 @@ export default function AgendaPage() {
 
                     {r.estado === 'SALA_ESPERA' && (
                       <span className={styles.inRoom}>En sala de espera</span>
+                    )}
+                    {r.estado === 'EN_ATENCION' && (
+                      <span className={styles.inRoom}>En Box</span>
                     )}
                   </div>
                 </div>

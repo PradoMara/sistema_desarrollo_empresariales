@@ -108,10 +108,15 @@
   border: 1px solid transparent;
 }
 .badgePending  { background: #fefce8; color: #92400e; border-color: #fde68a; }
+.badgeRechazada{ background: #fff1f2; color: #be123c; border-color: #fecdd3; }
 .badgeReserved { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
+.badgeCondicionada { background: #fff7ed; color: #c2410c; border-color: #fed7aa; }
+.badgeDelegada { background: #fdf4ff; color: #a21caf; border-color: #f5d0fe; }
 .badgeWaiting  { background: #f0f9ff; color: #0369a1; border-color: #bae6fd; }
+.badgeTriaje   { background: #ecfeff; color: #0e7490; border-color: #a5f3fc; }
 .badgeActive   { background: #f0fdf4; color: #166534; border-color: #bbf7d0; }
 .badgeDone     { background: #f8fafc; color: #64748b; border-color: #e2e8f0; }
+.badgeClosed   { background: #f1f5f9; color: #334155; border-color: #cbd5e1; }
 
 /* Estado visual "En sala" */
 .inRoom {

@@ -42,11 +42,12 @@
 }
 .legendEmergencia { color: #be123c; }
 .legendControl    { color: #0369a1; }
+.legendAtencion   { color: #059669; }
 
 /* Stats */
 .statsRow {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 0.75rem;
 }
 .statCard {
@@ -59,6 +60,7 @@
 }
 .statEmergencia { background: #fff1f2; border-color: #fecdd3; }
 .statControl    { background: #f0f9ff; border-color: #bae6fd; }
+.statAtencion   { background: #ecfdf5; border-color: #a7f3d0; }
 .statTotal      { background: #f8fafc; border-color: #e2e8f0; }
 
 .statNum {
@@ -68,6 +70,7 @@
 }
 .statEmergencia .statNum { color: #be123c; }
 .statControl    .statNum { color: #0369a1; }
+.statAtencion   .statNum { color: #059669; }
 .statTotal      .statNum { color: #334155; }
 
 .statLabel {
@@ -121,6 +124,10 @@
   border-left: 4px solid #38bdf8;
   background: #f8fcff;
 }
+.itemAtencion {
+  border-left: 4px solid #10b981;
+  background: #f0fdf4;
+}
 .listItem:hover { box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08); }
 
 /* Número de posición */
@@ -136,6 +143,7 @@
 }
 .posEmergencia { background: #fecdd3; color: #9f1239; }
 .posControl    { background: #bae6fd; color: #0c4a6e; }
+.posAtencion   { background: #a7f3d0; color: #065f46; }
 
 /* Info */
 .info { min-width: 0; }
@@ -169,8 +177,9 @@
 }
 .badgeEmergencia { background: #fff1f2; color: #be123c; border: 1px solid #fecdd3; }
 .badgeControl    { background: #f0f9ff; color: #0369a1; border: 1px solid #bae6fd; }
+.badgeAtencion   { background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; }
 
-/* Selector de triaje */
+/* Selector de triaje y acciones */
 .triaje { text-align: right; }
 .triajeLabel {
   font-size: 0.7rem;
@@ -200,6 +209,21 @@
 .triajeBtnActiveRed   { background: #be123c; color: #ffffff; border-color: #be123c; }
 .triajeBtnBlue        { background: #f0f9ff; color: #0369a1; border-color: #bae6fd; }
 .triajeBtnActiveBlue  { background: #0369a1; color: #ffffff; border-color: #0369a1; }
+
+.actionBtn {
+  background: #0f172a;
+  color: white;
+  border: none;
+  border-radius: 0.55rem;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+}
+.actionBtn:disabled { opacity: 0.45; cursor: default; }
+.actionBtn:not(:disabled):active { transform: scale(0.95); }
+.actionBtnSuccess { background: #10b981; }
 
 /* Nota footer */
 .note {

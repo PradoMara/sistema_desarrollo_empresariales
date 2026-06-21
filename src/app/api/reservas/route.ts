@@ -1,9 +1,23 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { evaluarMultiplesAbandonos } from '@/lib/abandonoService';
 
 // GET /api/reservas — lista todas las reservas
 export async function GET() {
   try {
+    const reservasInitial = await prisma.reserva.findMany({
+      include: {
+        paciente: { include: { reservas: true } },
+        cliente: true,
+        transaccionPago: true,
+      },
+    });
+
+    const allPatients = reservasInitial.map(r => r.paciente);
+    if (allPatients.length > 0) {
+      await evaluarMultiplesAbandonos(prisma, allPatients);
+    }
+
     const reservas = await prisma.reserva.findMany({
       include: {
         paciente: true,

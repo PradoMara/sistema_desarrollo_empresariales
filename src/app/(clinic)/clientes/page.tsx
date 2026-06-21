@@ -8,6 +8,7 @@ interface Paciente {
   id: string;
   nombre: string;
   especie: string;
+  microchip?: string;
 }
 
 interface Cliente {
@@ -26,11 +27,16 @@ export default function ClientesPage() {
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [loading, setLoading] = useState(true);
   const [editando, setEditando] = useState<Cliente | null>(null);
-  const [form, setForm] = useState({ nombre: '', telefono: '', email: '', estadoCrediticio: '' });
+  const [form, setForm] = useState({ nombre: '', telefono: '', email: '', estadoCrediticio: '', vincularPacienteId: '' });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
+  
+  // Estados para nuevo cliente y pacientes
+  const [isNewModalOpen, setIsNewModalOpen] = useState(false);
+  const [newClientForm, setNewClientForm] = useState({ nombre: '', rut: '', telefono: '', email: '' });
+  const [allPatients, setAllPatients] = useState<Paciente[]>([]);
 
   const fetchClientes = useCallback(async () => {
     try {
@@ -47,7 +53,21 @@ export default function ClientesPage() {
     }
   }, []);
 
-  useEffect(() => { fetchClientes(); }, [fetchClientes]);
+  const fetchAllPatients = useCallback(async () => {
+    try {
+      const res = await fetch('/api/patients');
+      if (res.ok) {
+        setAllPatients(await res.json());
+      }
+    } catch (e) {
+      console.error('Error fetching patients', e);
+    }
+  }, []);
+
+  useEffect(() => { 
+    fetchClientes(); 
+    fetchAllPatients();
+  }, [fetchClientes, fetchAllPatients]);
 
   const openEdit = (c: Cliente) => {
     setEditando(c);
@@ -56,6 +76,7 @@ export default function ClientesPage() {
       telefono: c.telefono ?? '',
       email: c.email ?? '',
       estadoCrediticio: c.estadoCrediticio,
+      vincularPacienteId: '',
     });
     setError('');
   };
@@ -80,6 +101,52 @@ export default function ClientesPage() {
     setSaving(false);
   };
 
+  const handleCreateClient = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    setError('');
+    try {
+      const res = await fetch('/api/clientes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newClientForm),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error ?? 'Error al crear cliente.');
+      } else {
+        setClientes((prev) => [...prev, data]);
+        setIsNewModalOpen(false);
+        setNewClientForm({ nombre: '', rut: '', telefono: '', email: '' });
+      }
+    } catch {
+      setError('Error de conexión.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (rut: string) => {
+    if (!window.confirm('¿Está seguro que desea eliminar este cliente y todos sus datos asociados? Esta acción no se puede deshacer.')) return;
+    
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/clientes/${encodeURIComponent(rut)}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        setFetchError(data.error ?? 'Error al eliminar cliente.');
+      } else {
+        setClientes((prev) => prev.filter((c) => c.rut !== rut));
+      }
+    } catch {
+      setFetchError('Error de conexión al eliminar.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const filtered = clientes.filter(
     (c) =>
       c.nombre.toLowerCase().includes(search.toLowerCase()) ||
@@ -94,14 +161,22 @@ export default function ClientesPage() {
           <p className={styles.eyebrow}>Gestión · Tutores</p>
           <h1 className={styles.title}>Directorio de clientes</h1>
         </div>
-        <input
-          id="search-clientes"
-          type="search"
-          className={styles.searchInput}
-          placeholder="Buscar por nombre o RUT…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+        <div className="flex gap-3">
+          <input
+            id="search-clientes"
+            type="search"
+            className={styles.searchInput}
+            placeholder="Buscar por nombre o RUT…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          <button 
+            className={styles.btnPrimary} 
+            onClick={() => { setIsNewModalOpen(true); setError(''); }}
+          >
+            Nuevo Cliente
+          </button>
+        </div>
       </div>
 
       {/* Lista */}
@@ -151,14 +226,23 @@ export default function ClientesPage() {
                 </div>
               )}
 
-              {/* Botón editar */}
-              <button
-                id={`btn-editar-${c.id}`}
-                className={styles.btnEdit}
-                onClick={() => openEdit(c)}
-              >
-                Editar datos de contacto
-              </button>
+              {/* Botones de acción */}
+              <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                <button
+                  id={`btn-editar-${c.id}`}
+                  className={styles.btnEdit}
+                  onClick={() => openEdit(c)}
+                >
+                  Editar datos de contacto
+                </button>
+                <button
+                  id={`btn-eliminar-${c.id}`}
+                  className="w-full rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm font-semibold text-rose-600 transition hover:bg-rose-100 hover:text-rose-700 sm:w-auto"
+                  onClick={() => handleDelete(c.rut)}
+                >
+                  Eliminar
+                </button>
+              </div>
             </article>
           ))
         )}
@@ -221,12 +305,91 @@ export default function ClientesPage() {
                   <option value="LITIGIO_ABANDONO">LITIGIO_ABANDONO</option>
                 </select>
               </label>
+
+              <label className={styles.label}>
+                Vincular Mascota Existente (Opcional)
+                <select
+                  className={styles.select}
+                  value={form.vincularPacienteId}
+                  onChange={(e) => setForm({ ...form, vincularPacienteId: e.target.value })}
+                >
+                  <option value="">Seleccione una mascota para vincular...</option>
+                  {allPatients
+                    .filter(p => !editando.patients.some(ep => ep.id === p.id))
+                    .map(p => (
+                      <option key={p.id} value={p.id}>{p.nombre} ({p.especie})</option>
+                    ))}
+                </select>
+              </label>
               <div className={styles.formActions}>
                 <button type="button" className={styles.btnSecondary} onClick={() => setEditando(null)}>
                   Cancelar
                 </button>
                 <button id="btn-guardar-cliente" type="submit" className={styles.btnPrimary} disabled={saving}>
                   {saving ? 'Guardando…' : 'Guardar cambios'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Nuevo Cliente */}
+      {isNewModalOpen && (
+        <div className={styles.overlay} onClick={() => setIsNewModalOpen(false)}>
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h2 className={styles.modalTitle}>Registrar Nuevo Tutor</h2>
+              <button className={styles.closeBtn} onClick={() => setIsNewModalOpen(false)}>✕</button>
+            </div>
+            <form onSubmit={handleCreateClient} className={styles.form}>
+              {error && <p className={styles.errorMsg}>{error}</p>}
+
+              <label className={styles.label}>
+                Nombre completo
+                <input
+                  required
+                  className={styles.input}
+                  value={newClientForm.nombre}
+                  onChange={(e) => setNewClientForm({ ...newClientForm, nombre: e.target.value })}
+                />
+              </label>
+              <label className={styles.label}>
+                RUT
+                <input
+                  required
+                  className={styles.input}
+                  placeholder="Ej. 12.345.678-9"
+                  value={newClientForm.rut}
+                  onChange={(e) => setNewClientForm({ ...newClientForm, rut: e.target.value })}
+                />
+              </label>
+              <label className={styles.label}>
+                Teléfono
+                <input
+                  type="tel"
+                  className={styles.input}
+                  placeholder="+56 9 1234 5678"
+                  value={newClientForm.telefono}
+                  onChange={(e) => setNewClientForm({ ...newClientForm, telefono: e.target.value })}
+                />
+              </label>
+              <label className={styles.label}>
+                Email
+                <input
+                  type="email"
+                  className={styles.input}
+                  placeholder="correo@ejemplo.cl"
+                  value={newClientForm.email}
+                  onChange={(e) => setNewClientForm({ ...newClientForm, email: e.target.value })}
+                />
+              </label>
+              <div className={styles.formActions}>
+                <button type="button" className={styles.btnSecondary} onClick={() => setIsNewModalOpen(false)}>
+                  Cancelar
+                </button>
+                <button type="submit" className={styles.btnPrimary} disabled={saving}>
+                  {saving ? 'Guardando…' : 'Crear Cliente'}
                 </button>
               </div>
             </form>

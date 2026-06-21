@@ -18,6 +18,13 @@ export async function GET() {
     const updatedPatients = await prisma.patient.findMany({
       include: {
         clients: true,
+        reservas: {
+          where: {
+            estado: {
+              not: 'PAGADO_CERRADO',
+            },
+          },
+        },
       },
     });
     

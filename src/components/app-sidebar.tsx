@@ -15,14 +15,13 @@ import {
 import { cn } from "@/lib/utils";
 
 const navigation = [
-  { href: "/", label: "Recepción", icon: LayoutDashboard },
+  { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/sala-de-espera", label: "Sala de Espera", icon: ChartNoAxesCombined },
   { href: "/pacientes", label: "Pacientes", icon: PawPrint },
   { href: "/clientes", label: "Clientes", icon: Shield },
   { href: "/agenda", label: "Agenda", icon: ChartNoAxesCombined },
   { href: "/urgencias", label: "Urgencias", icon: FileStack },
   { href: "/caja", label: "Caja / Pagos", icon: Wallet },
-  { href: "/ajustes", label: "Ajustes", icon: Settings },
 ];
 
 export function AppSidebar() {
@@ -32,7 +31,7 @@ export function AppSidebar() {
     <aside className="hidden w-72 border-r border-slate-200 bg-white/90 px-4 py-5 shadow-[0_12px_32px_rgba(15,23,42,0.04)] lg:flex lg:flex-col">
       <div className="mb-6 rounded-3xl bg-slate-950 px-5 py-5 text-white shadow-[0_16px_40px_rgba(15,23,42,0.18)]">
         <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-sky-200">VetClinic</p>
-        <h2 className="mt-2 text-xl font-semibold">PMN Clínico</h2>
+        <h2 className="mt-2 text-xl font-semibold">PMV Clínico</h2>
         <p className="mt-2 text-sm text-slate-300">Clínica veterinaria</p>
       </div>
 

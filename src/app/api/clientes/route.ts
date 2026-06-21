@@ -24,3 +24,38 @@ export async function GET() {
     return NextResponse.json({ error: 'Error al obtener clientes.' }, { status: 500 });
   }
 }
+
+// POST /api/clientes — crea un nuevo cliente
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    const { nombre, rut, telefono, email } = body;
+
+    if (!nombre || !rut) {
+      return NextResponse.json({ error: 'Nombre y RUT son requeridos.' }, { status: 400 });
+    }
+
+    const existe = await prisma.client.findUnique({ where: { rut } });
+    if (existe) {
+      return NextResponse.json({ error: 'Ya existe un cliente con ese RUT.' }, { status: 400 });
+    }
+
+    const nuevoCliente = await prisma.client.create({
+      data: {
+        nombre,
+        rut,
+        telefono,
+        email,
+        rol: 'GARANTE_PRINCIPAL',
+        estadoCrediticio: 'LIMPIO',
+        autorizado: true,
+      },
+      include: { patients: true }
+    });
+
+    return NextResponse.json(nuevoCliente, { status: 201 });
+  } catch (error) {
+    console.error('Error creating cliente:', error);
+    return NextResponse.json({ error: 'Error al crear el cliente.' }, { status: 500 });
+  }
+}

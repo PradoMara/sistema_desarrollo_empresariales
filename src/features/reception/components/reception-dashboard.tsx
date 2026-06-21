@@ -28,6 +28,7 @@ export type Patient = {
   prioridad: string | null;
   estadoFicha: string;
   clients: Client[];
+  reservas?: { id: string; estado: string }[];
 };
 
 const toastStyles = {
@@ -167,6 +168,41 @@ export function ReceptionDashboard() {
     }
   };
 
+  const markPatientAsInAttention = (patientId: string) => {
+    setPatients((prev) =>
+      prev.map((p) =>
+        p.id === patientId
+          ? { ...p, reservas: [...(p.reservas || []), { id: "temp", estado: "SALA_ESPERA" }] }
+          : p
+      )
+    );
+  };
+
+  const handleEmergencyDirect = async (patient: Patient) => {
+    const guarantor = patient.clients.find(c => c.rol === 'GARANTE_PRINCIPAL') || patient.clients[0];
+    if (!guarantor) {
+      addToast({ title: "Error", description: "El paciente no tiene un cliente asociado.", tone: "warning" });
+      return;
+    }
+    
+    const success = await addToWaitingListAPI({
+      patientId: patient.id,
+      clientId: guarantor.id,
+      tipo: "urgencia",
+      prioridad: "Alta",
+      estado: "en_espera"
+    });
+
+    if (success) {
+      addToast({
+        title: "Ingreso como emergencia",
+        description: `${patient.nombre} ingresado como emergencia por ${guarantor.nombre}.`,
+        tone: "warning",
+      });
+      markPatientAsInAttention(patient.id);
+    }
+  };
+
   const handleConfirmCheckIn = async () => {
     if (!selectedPatient || !activeClient) return;
     const hasDebt = ["DEUDA_TEMPRANA", "MORA_CRONICA", "LITIGIO_ABANDONO"].includes(activeClient.estadoCrediticio);
@@ -190,6 +226,7 @@ export function ReceptionDashboard() {
             : `${selectedPatient.nombre} fue ingresado por ${activeClient.nombre}.`,
         tone: tipo === "urgencia" ? "warning" : "success",
       });
+      markPatientAsInAttention(selectedPatient.id);
       closeModal();
     }
   };
@@ -211,6 +248,7 @@ export function ReceptionDashboard() {
         description: `${selectedPatient.nombre} ingresado como emergencia por ${activeClient.nombre}.`,
         tone: "warning",
       });
+      markPatientAsInAttention(selectedPatient.id);
       closeModal();
     }
   };
@@ -232,6 +270,7 @@ export function ReceptionDashboard() {
         description: `${selectedPatient.nombre} ingresado como reserva condicionada (Delegación Provisoria).`,
         tone: "success",
       });
+      markPatientAsInAttention(selectedPatient.id);
       closeModal();
     }
   };
@@ -253,6 +292,7 @@ export function ReceptionDashboard() {
         description: `Se ha registrado una solicitud de traspaso de titularidad para ${selectedPatient.nombre}.`,
         tone: "success",
       });
+      markPatientAsInAttention(selectedPatient.id);
       closeModal();
     }
   };
@@ -414,10 +454,24 @@ export function ReceptionDashboard() {
                     </ul>
                   </div>
 
-                  <div className="flex items-center justify-end lg:justify-end">
-                    <Button onClick={() => openCheckIn(patient)} className="w-full sm:w-auto">
-                      Iniciar Atención
-                    </Button>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end lg:justify-end">
+                    {patient.reservas && patient.reservas.length > 0 ? (
+                      <Button disabled variant="secondary" className="w-full sm:w-auto">
+                        En Atención
+                      </Button>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => handleEmergencyDirect(patient)}
+                          className="w-full rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-600 transition hover:bg-rose-100 hover:text-rose-700 sm:w-auto"
+                        >
+                          Emergencia
+                        </button>
+                        <Button onClick={() => openCheckIn(patient)} className="w-full sm:w-auto">
+                          Iniciar Atención
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </article>
               );
